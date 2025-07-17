@@ -30,7 +30,6 @@ const LoginComponent = () => {
   if (loading) {
     return (
         <>
-            <div><p>Logo Area</p></div>
             <div><p>Loading...</p></div>
         </>
     )
@@ -40,7 +39,6 @@ const LoginComponent = () => {
 
   return (
     <>
-      <div><p>Logo Area</p></div>
 
       {isAuthenticated ? (
         <div>

@@ -12,7 +12,6 @@ const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
   if (loading) {
     return (
       <div>
-        <p>Logo Area</p>
         <p>Loading...</p>
       </div>
     );
