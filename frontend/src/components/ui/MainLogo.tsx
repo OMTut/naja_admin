@@ -1,21 +1,24 @@
 import TypewriterText from './TypewriterText';
 
-const MainLogo = () => {
-   const asciiArt = `    _   __        _           ______     __      __         
+export const logoText = `    _   __        _           ______     __      __         
    / | / /___ _  (_)___ _    / ____/____/ /_  __/_/         
   /  |/ / __ \`/ / / __ \`/   / __/ / ___/ __ \\/ __ \\         
  / /|  / /_/ / / / /_/ /   / /___/ /__/ / / / /_/ /         
 /_/ |_/\\__,_/_/ /\\__,_/   /_____/\\___/_/ /_/\\____/          
            /___/                                            `;
 
+export const logoTypingTime = logoText.length * 30; // 30ms per character
+
+const MainLogo = () => {
    return (
       <div className="logo">
          <TypewriterText
-            text={asciiArt}
-            speed={15}
-            cursorChar="█"
+            text={logoText}
+            speed={12}
+            cursorChar="_"
             cursorBlinkRate={500}
             preserveLineBreaks={true}
+            hideCursorAfterComplete={true}
          >
             {({ displayedText, cursor }) => (
                <pre style={{
@@ -31,7 +34,7 @@ const MainLogo = () => {
                         {index < array.length - 1 && '\n'}
                      </span>
                   ))}
-
+                  {cursor}
                </pre>
             )}
          </TypewriterText>

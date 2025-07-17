@@ -8,6 +8,7 @@ interface TypewriterTextProps {
   cursorChar?: string;
   className?: string;
   preserveLineBreaks?: boolean;
+  hideCursorAfterComplete?: boolean;
   children?: (props: { displayedText: string; cursor: ReactNode }) => ReactNode;
 }
 
@@ -18,6 +19,7 @@ const TypewriterText = ({
   cursorChar = '_',
   className,
   preserveLineBreaks = false,
+  hideCursorAfterComplete = false,
   children
 }: TypewriterTextProps) => {
   const { displayedText, isTyping, showCursor } = useTypewriter({
@@ -28,7 +30,7 @@ const TypewriterText = ({
 
   const cursor = (
     <span style={{
-      opacity: (isTyping || showCursor) ? 1 : 0,
+      opacity: (isTyping || (showCursor && !(hideCursorAfterComplete && !isTyping))) ? 1 : 0,
       transition: 'opacity 0.1s'
     }}>
       {cursorChar}
