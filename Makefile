@@ -11,6 +11,9 @@ API_ACTIVATE := $(API_VENV)/Scripts/activate.bat
 API_TESTS := $(API_DIR)/tests
 API_APP := main:app
 
+# Frontend Variables
+FRONTEND_DIR := frontend
+
 
 .DEFAULT_GOAL := help
 ######################################################################
@@ -18,11 +21,19 @@ API_APP := main:app
 ######################################################################
 .PHONY: help
 help:
-	@echo "Available commands:"
+	@echo "Available Backend commands:"
 	@echo "  make install-api    - Set up the dev environment for api/ and install dependencies"
 	@echo "  make run-api        - Run the API server"
 	@echo "  make test-api       - Run API tests"
 	@echo "  make clean-api      - Clean up the Backend API environment (remove venv)"
+	@echo ""
+	@echo "Available Frontend commands:"
+	@echo "  make install-frontend     - Install frontend dependencies"
+	@echo "  make run-frontend	   - Run the frontend development server"
+	@echo "  make build-frontend       - Build the frontend for production"
+	@echo "  make lint-frontend        - Run linting on the frontend code"
+	@echo "  make clean-frontend       - Clean frontend environment"
+
 
 ######################################################################
 # API Setup and Run
@@ -61,3 +72,42 @@ clean-api:
 	@echo Cleaning up Backend API environment...
 	@if exist "$(API_VENV)" (rmdir /s /q "$(API_VENV)") else (echo "Virtual environment does not exist.")
 	@echo Backend API environment cleaned up.
+
+######################################################################
+# Frontend Setup and Run
+######################################################################
+.PHONY: install-frontend run-frontend
+install-frontend:
+	@echo Installing frontend dependencies...
+	@cd $(FRONTEND_DIR) && npm install
+	@echo Frontend dependencies installed.
+
+run-frontend:
+	@echo Starting the frontend development server...
+	@cd $(FRONTEND_DIR) && npm run dev
+
+######################################################################
+# Build Frontend
+######################################################################
+.PHONY: build-frontend
+build-frontend:
+	@echo "Building the frontend for production..."
+	@cd $(FRONTEND_DIR) && npm run build
+
+######################################################################
+# Lint Frontend
+######################################################################
+.PHONY: lint-frontend
+lint-frontend:
+	@echo "Linting the frontend code..."
+	@cd $(FRONTEND_DIR) && npm run lint
+	@echo "Frontend linting completed."
+
+######################################################################
+# Clean Frontend
+######################################################################
+.PHONY: clean-frontend
+clean-frontend:
+	@echo "Cleaning up the frontend environment..."
+	@if exist "$(FRONTEND_DIR)\node_modules" (rmdir /s /q "$(FRONTEND_DIR)\node_modules") else (echo "node_modules does not exist.")
+	@echo "Frontend environment cleaned up."
