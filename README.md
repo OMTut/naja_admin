@@ -4,9 +4,7 @@ This project contains the backend API and frontend UI for the Naja Admin dashboa
 
 ## Quick Start
 
-This project uses a `Makefile` to automate common development tasks. Currently, only the api portion of the project is included.
-
-The following commands are available for managing the backend API.
+This project uses a `Makefile` to automate common development tasks.
 
 ### 1. Install Dependencies
 
@@ -16,12 +14,22 @@ This command will create a Python virtual environment in `api/venv` and install 
 make install-api
 ```
 
-### 2. Run the Development Server
+Install npm dependencies for the React frontend
+```shell
+make install-frontend
+```
+
+### 2. Run the Development Servers
 
 This will start the FastAPI development server with auto-reloading enabled. The API will be available at `http://127.0.0.1:8000`.
 
 ```shell
 make run-api
+```
+
+Run the React + Vite frontend
+```shell
+make run-frontend
 ```
 
 ### 3. Run Tests
@@ -38,6 +46,7 @@ This will completely remove the Python virtual environment directory (`api/venv`
 
 ```shell
 make clean-api
+make clean-frontend
 ```
 
 ### Available Commands
