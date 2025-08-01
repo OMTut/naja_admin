@@ -14,6 +14,7 @@ class Session(Base):
         DateTime(timezone=True), 
         server_default=func.current_timestamp()
     )
+    last_accessed_at = Column(DateTime(timezone=True), nullable=False)
     expires_at = Column(DateTime(timezone=True), nullable=False)
     is_active = Column(Boolean, default=True, nullable=False)
     
