@@ -9,6 +9,7 @@ from database.connection import engine, Base
 from database.models.user import User
 from database.models.session import Session
 from database.models.role import Role
+from database.models.permission import Permission
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
