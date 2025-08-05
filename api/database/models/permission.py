@@ -13,6 +13,6 @@ class Permission(Base):
     created_at = Column(DateTime, default=func.now())  # TIMESTAMP DEFAULT NOW()
     updated_at = Column(DateTime, default=func.now(), onupdate=func.now())  # TIMESTAMP DEFAULT NOW() ON UPDATE NOW()
 
-    # Relationships
-    users = relationship("User", secondary="users_permissions")
-    roles = relationship("Role", secondary="role_permissions")
+    # Relationships - temporarily commented out until migration issue is resolved
+    # users = relationship("User", secondary="users_permissions")
+    # roles = relationship("Role", secondary="role_permission")

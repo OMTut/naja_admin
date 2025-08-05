@@ -6,6 +6,8 @@ from dotenv import load_dotenv
 from database.connection import Base
 from faker import Faker
 from unittest.mock import patch
+from alembic.config import Config
+from alembic import command
 
 # Load environment variables
 load_dotenv()
@@ -45,13 +47,27 @@ def setup_test_database():
         print(f"❌ Test database connection failed: {e}")
         raise
     
-    # Create all tables
+    # Run Alembic migrations to create all tables (including junction tables)
     try:
-        Base.metadata.create_all(bind=test_engine)
-        print("✅ Test database tables created successfully")
+        # Set the database URL for migrations
+        os.environ['DATABASE_URL'] = TEST_DATABASE_URL
+        
+        # Configure Alembic
+        alembic_cfg = Config("alembic.ini")
+        alembic_cfg.set_main_option("sqlalchemy.url", TEST_DATABASE_URL)
+        
+        # Run migrations
+        command.upgrade(alembic_cfg, "head")
+        print("✅ Test database migrations applied successfully")
     except Exception as e:
-        print(f"❌ Failed to create test database tables: {e}")
-        raise
+        print(f"❌ Failed to apply test database migrations: {e}")
+        # Fallback to create_all if migrations fail
+        try:
+            Base.metadata.create_all(bind=test_engine)
+            print("✅ Test database tables created with fallback method")
+        except Exception as fallback_e:
+            print(f"❌ Fallback table creation also failed: {fallback_e}")
+            raise
     
     yield
     

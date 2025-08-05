@@ -48,7 +48,7 @@ class User(Base):
         """Check if user is approved and not banned"""
         return self.status == UserStatus.APPROVED
     
-    # Relationships
-    roles = relationship("Role", secondary="users_roles")
-    permissions = relationship("Permission", secondary="users_permissions")
+    # Relationships - temporarily commented out until migration issue is resolved
+    # roles = relationship("Role", secondary="users_roles")
+    # permissions = relationship("Permission", secondary="users_permissions")
 

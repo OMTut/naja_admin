@@ -21,6 +21,6 @@ class Role(Base):
         onupdate=func.current_timestamp()  # TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
     )
 
-    # Relationships
-    users = relationship("User", secondary="users_roles")
-    permissions = relationship("Permission", secondary="role_permissions")
+    # Relationships - temporarily commented out until migration issue is resolved
+    # users = relationship("User", secondary="users_roles")
+    # permissions = relationship("Permission", secondary="role_permission")
