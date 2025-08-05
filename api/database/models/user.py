@@ -1,4 +1,5 @@
-from sqlalchemy import Column, Integer, String, DateTime, Enum, CheckConstraint
+from sqlalchemy import Column, Integer, String, DateTime, Enum
+from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 from datetime import datetime
 import enum
@@ -46,4 +47,8 @@ class User(Base):
     def is_active(self) -> bool:
         """Check if user is approved and not banned"""
         return self.status == UserStatus.APPROVED
+    
+    # Relationships
+    roles = relationship("Role", secondary="users_roles")
+    permissions = relationship("Permission", secondary="users_permissions")
 

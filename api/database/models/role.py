@@ -1,5 +1,6 @@
 from sqlalchemy import Column, Integer, String, DateTime, Enum, CheckConstraint
 from sqlalchemy.sql import func
+from sqlalchemy.orm import relationship
 from datetime import datetime
 from ..connection import Base
 
@@ -19,3 +20,7 @@ class Role(Base):
         server_default=func.current_timestamp(),
         onupdate=func.current_timestamp()  # TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
     )
+
+    # Relationships
+    users = relationship("User", secondary="users_roles")
+    permissions = relationship("Permission", secondary="role_permissions")
