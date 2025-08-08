@@ -6,7 +6,11 @@ from tests.factories.permissionFactory import PermissionFactory
 from database.models.permission import Permission
 from database.operations.permission_operations import (
     store_permission,
-    getAllPermissions
+    getAllPermissions,
+    getPermissionIdByName,
+    getPermissionById,
+    getPermissionByName,
+    delete_permission_by_id
 )
 
 ##############################################
@@ -60,3 +64,79 @@ def test_getAllPermissions(db_session):
     assert len(permissions) >= 2  # At least the two we created should be present
     assert any(permission.permission_name == "Permissions_1" for permission in permissions)
     assert any(permission.permission_name == "Permission_2" for permission in permissions)
+
+##############################################
+# Test for getPermissionIdByName
+##############################################
+def test_getPermissionById(db_session):
+    # First store the role
+    permission_data = PermissionFactory.build(permission_name="TestPermission")
+    stored_permission = store_permission(permission_data)
+
+    # Retrieve by name
+    retreived_permission_id = getPermissionIdByName("TestPermission")
+
+    assert retreived_permission_id is not None
+    assert retreived_permission_id == stored_permission.permission_id
+
+
+def test_getPermissionById_nonexistent(db_session):
+    """Test retrieving a non-existent role by name"""
+    permission_id = getPermissionIdByName("NonExistentPermission")
+    assert permission_id is None
+
+
+##############################################
+# Test for getPermissionById
+##############################################
+def test_getPermissionById(db_session):
+    """Test retrieving a permission by its ID"""
+    # Store a permission first
+    permission_data = PermissionFactory.build(permission_name="TestPermissionById")
+    stored_permission = store_permission(permission_data)
+    
+    # Retrieve by ID
+    retrieved_permission = getPermissionById(stored_permission.permission_id)
+    
+    assert retrieved_permission is not None
+    assert retrieved_permission.permission_id == stored_permission.permission_id
+    assert retrieved_permission.permission_name == "TestPermissionById"
+
+##############################################
+# Test for getPermissionByName
+##############################################
+def test_getPermissionByName(db_session):
+    """Test retrieving a permission by its name"""
+    # Store a permission first
+    permission_data = PermissionFactory.build(permission_name="TestPermissionByName")
+    stored_permission = store_permission(permission_data)
+    
+    # Retrieve by name
+    retrieved_permission = getPermissionByName(stored_permission.permission_name)
+    
+    assert retrieved_permission is not None
+    assert retrieved_permission.permission_id == stored_permission.permission_id
+    assert retrieved_permission.permission_name == "TestPermissionByName"
+
+##############################################
+# Test for delete_permission_by_id
+##############################################
+def test_delete_permission_by_id(db_session):
+
+    # Create and store Permission
+    permission_data = PermissionFactory.build(permission_name="PermisionToDelete")
+    stored_permission = store_permission(permission_data)
+    permission_id = stored_permission.permission_id
+
+    # Verify it exists
+    assert getPermissionById(permission_id) is not None
+
+    # Delete it
+    result = delete_permission_by_id(permission_id)
+    assert result is True
+
+    assert getPermissionById(permission_id) is None
+
+def test_delete_permission_nonexistent(db_session):
+    result = delete_permission_by_id(99999)  # ID that doesn't exist
+    assert result is False
