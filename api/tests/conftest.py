@@ -82,12 +82,13 @@ def db_session(setup_test_database):
     
     # Patch SessionLocal at multiple locations to ensure test isolation
     with patch('database.connection.SessionLocal') as mock_session_local, \
-         patch('database.operations.users.store_user_appending_approval.SessionLocal') as mock_store_session, \
-         patch('database.operations.users.get_user_by_discord_id.SessionLocal') as mock_get_discord_session, \
-         patch('database.operations.users.get_user_by_id.SessionLocal') as mock_get_id_session, \
-         patch('database.operations.users.get_server_nickname_by_user_id.SessionLocal') as mock_nickname_session, \
-         patch('database.operations.users.update_user_discord_info.SessionLocal') as mock_update_session, \
-         patch('database.operations.role_operations.SessionLocal') as mock_role_session:
+        patch('database.operations.users.store_user_appending_approval.SessionLocal') as mock_store_session, \
+        patch('database.operations.users.get_user_by_discord_id.SessionLocal') as mock_get_discord_session, \
+        patch('database.operations.users.get_user_by_id.SessionLocal') as mock_get_id_session, \
+        patch('database.operations.users.get_server_nickname_by_user_id.SessionLocal') as mock_nickname_session, \
+        patch('database.operations.users.update_user_discord_info.SessionLocal') as mock_update_session, \
+        patch('database.operations.role_operations.SessionLocal') as mock_role_session, \
+        patch('database.operations.permission_operations.SessionLocal') as mock_permission_session:
         
         # Return a fresh session each time SessionLocal() is called
         mock_session_local.return_value = session
@@ -97,6 +98,7 @@ def db_session(setup_test_database):
         mock_nickname_session.return_value = session
         mock_update_session.return_value = session
         mock_role_session.return_value = session
+        mock_permission_session.return_value = session
         
         try:
             yield session
