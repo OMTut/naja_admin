@@ -10,7 +10,9 @@ from database.operations.permission_operations import (
     getPermissionIdByName,
     getPermissionById,
     getPermissionByName,
-    delete_permission_by_id
+    delete_permission_by_id,
+    update_permission,
+    permission_exists
 )
 
 ##############################################
@@ -140,3 +142,51 @@ def test_delete_permission_by_id(db_session):
 def test_delete_permission_nonexistent(db_session):
     result = delete_permission_by_id(99999)  # ID that doesn't exist
     assert result is False
+
+##############################################
+# Test for update_permission
+##############################################
+def test_update_permission(db_session):
+    # Store a role first
+    permission_data = PermissionFactory.build(role_name="OrigionalPermission")
+    stored_permission = store_permission(permission_data)
+    
+    # Update it
+    update_data = {
+        'permission_name': 'UpdatedPermission',
+        'permission_description': 'Updated description'
+    }
+    updated_permission = update_permission(stored_permission.permission_id, update_data)
+    
+    assert updated_permission is not None
+    assert updated_permission.permission_name == 'UpdatedPermission'
+    assert updated_permission.permission_description == 'Updated description'
+    assert updated_permission.permission_id == stored_permission.permission_id  # ID should remain same
+
+
+def test_update_permission_nonexistent(db_session):
+    update_data = {'permission_name': 'NewName'}
+    result = update_permission(99999, update_data)  # ID that doesn't exist
+    assert result is None
+
+
+def test_update_permission_partial(db_session):
+    """Test updating only some fields of a role"""
+    # Store a role first
+    permission_data = PermissionFactory.build(
+        permission_name="Partial Updated Permision",
+        permission_description="Original description"
+    )
+    stored_permission = store_permission(permission_data)
+    
+    # Update only the description
+    update_data = {'permission_description': 'New description only'}
+    updated_permission = update_permission(stored_permission.permission_id, update_data)
+    
+    assert updated_permission is not None
+    assert updated_permission.permission_name == "Partial Updated Permision"  # Should remain unchanged
+    assert updated_permission.permission_description == 'New description only'  # Should be updated
+
+##############################################
+# Test for permission_exists
+##############################################

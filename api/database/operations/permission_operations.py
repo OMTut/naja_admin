@@ -126,3 +126,43 @@ def delete_permission_by_id(permission_id: int) -> bool:
         return None
     finally:
         db.close()
+
+######################################
+# update_permission
+# Params: permission_id: int, permission_data: dict
+# Updates an existing permission in the database
+#####################################
+def update_permission(permission_id: int, permission_data: dict) -> Optional[Permission]:
+    db: DBSession = SessionLocal()
+    try:
+        permission = db.query(Permission).filter(Permission.permission_id == permission_id).first()
+        if permission:
+            for key, value in permission_data.items():
+                setattr(permission, key, value)
+            db.commit()
+            db.refresh(permission)
+            return permission
+        return None
+    except Exception as e:
+        db.rollback()
+        print(f"Error updating Permission: {e}")
+        return None
+    finally:
+        db.close()
+
+######################################
+# permission_exists
+# Params: permission_name: str
+# Returns: bool
+# Checks if a permission exists in the database by its name
+######################################
+def permission_exists(permission_name: str) -> bool:
+    db: DBSession = SessionLocal()
+    try:
+        permission = db.query(Permission).filter(Permission.permission_name == permission_name).first()
+        return permission is not None
+    except Exception as e:
+        print(f"Error occurred: {e}")
+        return False
+    finally:
+        db.close()
