@@ -190,3 +190,23 @@ def test_update_permission_partial(db_session):
 ##############################################
 # Test for permission_exists
 ##############################################
+def test_permission_exists(db_session):
+    permission_data = PermissionFactory.build(permission_name="Existing Permission Exists")
+    store_permission(permission_data)
+
+    assert permission_exists("Existing Permission Exists") is True
+    assert permission_exists("SomeRandoName") is False
+
+    permissionToDelete = getPermissionByName("Existing Permission Exists")
+    delete_permission_by_id(permissionToDelete)
+    assert permission_exists("Existing PermissionExists") is False
+
+def test_permission_exists_case_sensitive(db_session):
+    role_data = PermissionFactory.build(permission_name="CaseSensitivePermission")
+    store_permission(role_data)
+    
+    # Check case sensitivity
+    assert permission_exists("CaseSensitivePermission") is True
+    assert permission_exists("casesensitivepermission") is False
+    assert permission_exists("CASESENSITIVEPERMISSION") is False
+    
