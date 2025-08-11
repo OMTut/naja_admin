@@ -9,19 +9,27 @@ from ..models.user import User
 from ..connection import SessionLocal
 
 
-def create_session(user_id: int, expires_in_days: int = 7) -> Optional[str]:
+def create_session(user_id: int, expires_in_days: int = 7, lazy_cleanup: bool = True) -> Optional[str]:
     """
     Create a new session for the user in the database
     
     Args:
         user_id: The ID of the user
         expires_in_days: Number of days until session expires (default 7)
+        lazy_cleanup: Whether to clean up expired sessions during creation
     
     Returns:
         Session ID if successful, None otherwise
     """
     db: DBSession = SessionLocal()
     try:
+        # Lazy cleanup: remove expired sessions when creating new ones
+        if lazy_cleanup:
+            expired_count = db.query(Session).filter(
+                Session.expires_at < datetime.utcnow()
+            ).delete()
+            if expired_count > 0:
+                print(f"Lazy cleanup: removed {expired_count} expired sessions")
         # Generate a secure session ID
         session_id = secrets.token_urlsafe(32)
         
@@ -33,7 +41,8 @@ def create_session(user_id: int, expires_in_days: int = 7) -> Optional[str]:
             id=session_id,
             user_id=user_id,
             expires_at=expires_at,
-            is_active=True
+            is_active=True,
+            last_accessed_at=datetime.utcnow()
         )
         
         db.add(session)
@@ -108,8 +117,7 @@ def get_user_from_session(session_id: str) -> Optional[User]:
 
 def update_session_access(session_id: str) -> bool:
     """
-    Update the session's last accessed time (you could add this field to model)
-    For now, this is a placeholder since the model doesn't have last_accessed
+    Update the session's last accessed time
     
     Args:
         session_id: The session ID
@@ -117,9 +125,24 @@ def update_session_access(session_id: str) -> bool:
     Returns:
         True if successful, False otherwise
     """
-    # Since the current model doesn't have last_accessed field,
-    # we'll just return True. You could add this field later if needed.
-    return True
+    db: DBSession = SessionLocal()
+    try:
+        session = db.query(Session).filter(
+            Session.id == session_id,
+            Session.is_active == True
+        ).first()
+
+        if session:
+            session.last_accessed_at = datetime.utcnow()
+            db.commit()
+            return True
+        return False
+    except Exception as e:
+        db.rollback()
+        print(f"Error updating session access time {session_id}: {e}")
+        return False
+    finally:
+        db.close()
 
 
 def invalidate_session(session_id: str) -> bool:
