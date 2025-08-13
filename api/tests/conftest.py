@@ -122,9 +122,7 @@ def db_session(setup_test_database):
         patch('database.operations.users.update_user_discord_info.SessionLocal') as mock_update_session, \
         patch('database.operations.role_operations.SessionLocal') as mock_role_session, \
         patch('database.operations.permission_operations.SessionLocal') as mock_permission_session, \
-        patch('database.operations.users_roles.SessionLocal') as mock_users_roles_session, \
-        patch('services.role_access.SessionLocal') as mock_role_access_session, \
-        patch('services.sync_user_roles.SessionLocal') as mock_sync_roles_session:
+        patch('database.operations.users_roles.SessionLocal') as mock_users_roles_session:
         
         # Return a fresh session each time SessionLocal() is called
         mock_session_local.return_value = session
@@ -136,8 +134,6 @@ def db_session(setup_test_database):
         mock_role_session.return_value = session
         mock_permission_session.return_value = session
         mock_users_roles_session.return_value = session
-        mock_role_access_session.return_value = session
-        mock_sync_roles_session.return_value = session
         
         try:
             yield session

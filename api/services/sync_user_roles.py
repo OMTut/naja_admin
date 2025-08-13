@@ -1,5 +1,9 @@
-from database.connection import SessionLocal
-from sqlalchemy import text
+from database.operations.users_roles import (
+    get_user_roles,
+    clear_user_roles,
+    add_user_role,
+    get_roles_by_discord_ids
+)
 import logging
 
 logger = logging.getLogger(__name__)
@@ -22,54 +26,50 @@ def sync_user_roles(user_id: int, user_discord_roles: list[str]) -> bool:
     """
     if not user_discord_roles:
         logger.info(f"No Discord roles provided for user {user_id} - clearing all roles")
-        user_discord_roles = []  # Will clear all roles below
+        # Clear all roles and return
+        return clear_user_roles(user_id)
     
     try:
-        session = SessionLocal()
-        
         # Step 1: Find which Discord roles exist in our database
-        query = text("""
-            SELECT role_id, role_discord_id, role_name 
-            FROM roles 
-            WHERE role_discord_id = ANY(:discord_role_ids)
-        """)
+        valid_roles = get_roles_by_discord_ids(user_discord_roles)
         
-        result = session.execute(query, {"discord_role_ids": user_discord_roles})
-        valid_roles = result.fetchall()
-        
-        valid_role_ids = [row[0] for row in valid_roles]  # Get role_id (primary key)
-        role_names = [row[2] for row in valid_roles]       # Get role names for logging
-        
+        role_names = [role["role_name"] for role in valid_roles]
         logger.info(f"User {user_id} has {len(valid_roles)} valid roles: {role_names}")
         
         # Step 2: Remove all existing role assignments for this user
-        delete_query = text("DELETE FROM users_roles WHERE user_id = :user_id")
-        session.execute(delete_query, {"user_id": user_id})
+        clear_result = clear_user_roles(user_id)
+        if not clear_result and len(get_user_roles(user_id)) > 0:
+            # If clear failed but user still has roles, something went wrong
+            logger.error(f"Failed to clear existing roles for user {user_id}")
+            return False
         
         # Step 3: Add new role assignments
-        if valid_role_ids:
-            for role_id in valid_role_ids:
-                insert_query = text("""
-                    INSERT INTO users_roles (user_id, role_id) 
-                    VALUES (:user_id, :role_id)
-                """)
-                session.execute(insert_query, {
-                    "user_id": user_id, 
-                    "role_id": role_id
-                })
-        
-        # Commit all changes
-        session.commit()
-        session.close()
-        
-        logger.info(f"Successfully synced {len(valid_role_ids)} roles for user {user_id}")
-        return True
+        if valid_roles:
+            success_count = 0
+            for role in valid_roles:
+                # We need to get the role_id from the database operations
+                # The get_roles_by_discord_ids returns role info but we need the internal role_id
+                # Let's get it from a role operations function
+                from database.operations.role_operations import getRoleIdByDiscordId
+                
+                role_id = getRoleIdByDiscordId(role["role_discord_id"])
+                if role_id and add_user_role(user_id, role_id):
+                    success_count += 1
+                else:
+                    logger.warning(f"Failed to add role {role['role_name']} to user {user_id}")
+            
+            if success_count == len(valid_roles):
+                logger.info(f"Successfully synced {success_count} roles for user {user_id}")
+                return True
+            else:
+                logger.error(f"Only synced {success_count}/{len(valid_roles)} roles for user {user_id}")
+                return False
+        else:
+            logger.info(f"No valid roles to sync for user {user_id}")
+            return True
         
     except Exception as e:
         logger.error(f"Error syncing roles for user {user_id}: {e}")
-        if 'session' in locals():
-            session.rollback()
-            session.close()
         return False
 
 
@@ -77,37 +77,27 @@ def get_user_current_roles(user_id: int) -> list[dict]:
     """
     Get the user's current role assignments from the database.
     
+    This is a higher-level service function that provides enhanced formatting
+    compared to the basic operations layer function.
+    
     Args:
         user_id: Database user ID
         
     Returns:
-        list[dict]: List of roles currently assigned to the user
+        list[dict]: List of roles currently assigned to the user with enhanced formatting
     """
     try:
-        session = SessionLocal()
+        # Use the operations layer function
+        basic_roles = get_user_roles(user_id)
         
-        query = text("""
-            SELECT r.role_id, r.role_discord_id, r.role_name, r.role_description, r.grants_access
-            FROM roles r
-            JOIN users_roles ur ON r.role_id = ur.role_id
-            WHERE ur.user_id = :user_id
-            ORDER BY r.role_name
-        """)
-        
-        result = session.execute(query, {"user_id": user_id})
-        roles = result.fetchall()
-        
-        session.close()
-        
+        # Transform to the service layer format with enhanced field names
         return [
             {
-                "role_id": row[0],
-                "discord_id": row[1],
-                "name": row[2],
-                "description": row[3],
-                "grants_access": row[4]
+                "discord_id": role["role_discord_id"],
+                "name": role["role_name"],
+                "grants_access": role["grants_access"]
             }
-            for row in roles
+            for role in basic_roles
         ]
         
     except Exception as e:

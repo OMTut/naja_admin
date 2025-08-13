@@ -25,6 +25,22 @@ def getRoleIdByName(role_name: str) -> Optional[int]:
     finally:
         db.close()
 
+####################################
+# getRoleIdByDiscordId
+# Params: discord_id: str
+# Give it a Discord role ID and it returns the database role ID if it exists
+####################################
+def getRoleIdByDiscordId(discord_id: str) -> Optional[int]:
+    db: DBSession = SessionLocal()
+    try:
+        role = db.query(Role).filter(Role.role_discord_id == discord_id).first()
+        return role.role_id if role else None
+    except Exception as e:
+        print(f"Error occurred: {e}")
+        return None
+    finally:
+        db.close()
+
 #####################################
 # getRoleByRoleId
 # Params: role_id: int

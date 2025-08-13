@@ -1,5 +1,4 @@
-from database.connection import SessionLocal
-from sqlalchemy import text
+from database.operations.users_roles import get_roles_by_discord_ids
 import logging
 
 logger = logging.getLogger(__name__)
@@ -19,23 +18,14 @@ def check_user_has_access_role(discord_role_ids: list[str]) -> bool:
         return False
     
     try:
-        session = SessionLocal()
+        # Use operations layer to get role details
+        user_roles = get_roles_by_discord_ids(discord_role_ids)
         
-        # Check if any of the user's Discord roles have grants_access = true
-        query = text("""
-            SELECT role_discord_id, role_name, grants_access 
-            FROM roles 
-            WHERE role_discord_id = ANY(:role_ids) 
-            AND grants_access = true
-        """)
+        # Check if any roles grant access
+        access_granting_roles = [role for role in user_roles if role["grants_access"]]
         
-        result = session.execute(query, {"role_ids": discord_role_ids})
-        matching_roles = result.fetchall()
-        
-        session.close()
-        
-        if matching_roles:
-            role_names = [row[1] for row in matching_roles]
+        if access_granting_roles:
+            role_names = [role["role_name"] for role in access_granting_roles]
             logger.info(f"User has access-granting roles: {role_names}")
             return True
         else:
@@ -54,34 +44,27 @@ def get_user_access_roles(discord_role_ids: list[str]) -> list[dict]:
         discord_role_ids: List of Discord role IDs from the user's guild membership
         
     Returns:
-        list[dict]: List of roles that grant access with their details
+        list[dict]: List of roles with their details, ordered by access-granting first
     """
     if not discord_role_ids:
         return []
     
     try:
-        session = SessionLocal()
+        # Use operations layer to get role details
+        user_roles = get_roles_by_discord_ids(discord_role_ids)
         
-        query = text("""
-            SELECT role_discord_id, role_name, role_description, grants_access 
-            FROM roles 
-            WHERE role_discord_id = ANY(:role_ids)
-            ORDER BY grants_access DESC, role_name
-        """)
+        # Sort by grants_access (True first) then by role_name
+        sorted_roles = sorted(user_roles, key=lambda x: (not x["grants_access"], x["role_name"]))
         
-        result = session.execute(query, {"role_ids": discord_role_ids})
-        roles = result.fetchall()
-        
-        session.close()
-        
+        # Transform to service layer format
         return [
             {
-                "discord_id": row[0],
-                "name": row[1], 
-                "description": row[2],
-                "grants_access": row[3]
+                "discord_id": role["role_discord_id"],
+                "name": role["role_name"], 
+                "description": role["role_description"],
+                "grants_access": role["grants_access"]
             }
-            for row in roles
+            for role in sorted_roles
         ]
         
     except Exception as e:
