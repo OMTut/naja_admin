@@ -5,6 +5,7 @@ from main import app
 
 @pytest.mark.asyncio
 @pytest.mark.unit
+@pytest.mark.endpoints
 async def test_root_endpoint():
     """Test the root endpoint returns correct message."""
     async with AsyncClient(app=app, base_url="http://test") as client:
@@ -18,6 +19,7 @@ async def test_root_endpoint():
 
 @pytest.mark.asyncio
 @pytest.mark.unit
+@pytest.mark.endpoints
 async def test_health_endpoint():
     """Test the health check endpoint."""
     async with AsyncClient(app=app, base_url="http://test") as client:
@@ -30,6 +32,7 @@ async def test_health_endpoint():
 
 @pytest.mark.asyncio
 @pytest.mark.unit
+@pytest.mark.endpoints
 async def test_nonexistent_endpoint():
     """Test that nonexistent endpoints return 404."""
     async with AsyncClient(app=app, base_url="http://test") as client:

@@ -25,6 +25,9 @@ help:
 	@echo "  make install-api    - Set up the dev environment for api/ and install dependencies"
 	@echo "  make run-api        - Run the API server"
 	@echo "  make test-api       - Run API tests"
+	@echo "  make test-api-clean - Run API tests with clean output"
+	@echo "  make test-api-quick - Run API tests with minimal output"
+	@echo "  make test-api-by-file - Run API tests grouped by file"
 	@echo "  make clean-api      - Clean up the Backend API environment (remove venv)"
 	@echo ""
 	@echo "Available Frontend commands:"
@@ -56,10 +59,28 @@ run-api:
 ######################################################################
 # API Testing
 ######################################################################
-.PHONY: test-api
+.PHONY: test-api test-api-clean test-api-quick test-api-by-file
 test-api:
 	@echo Running API tests...
 	@call $(API_ACTIVATE) && pytest $(API_TESTS)
+	@echo API tests completed.
+
+# Clean output - no traceback, no header
+test-api-clean:
+	@echo Running API tests with clean output...
+	@call $(API_ACTIVATE) && pytest $(API_TESTS) --tb=no --no-header -v
+	@echo API tests completed.
+
+# Quick output - minimal
+test-api-quick:
+	@echo Running API tests with minimal output...
+	@call $(API_ACTIVATE) && pytest $(API_TESTS) -q
+	@echo API tests completed.
+
+# Group by file
+test-api-by-file:
+	@echo Running API tests grouped by file...
+	@call $(API_ACTIVATE) && pytest $(API_TESTS) --tb=short --no-header -q
 	@echo API tests completed.
 
 ######################################################################

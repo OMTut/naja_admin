@@ -2,6 +2,8 @@
 Tests for user operations
 """
 import pytest
+import asyncio
+from unittest.mock import patch, AsyncMock
 from database.operations.users import (
     store_user_pending_approval,
     get_user_by_id,
@@ -11,6 +13,8 @@ from database.operations.users import (
     update_user_discord_info
 )
 from database.models.user import User, UserStatus
+from database.models.role import Role
+from routes.auth.discord_oauth import discord_callback
 
 
 def test_store_user_pending_approval(db_session, sample_user_data):
@@ -170,9 +174,6 @@ def test_update_user_discord_info(db_session, sample_user_data):
 
 def test_discord_oauth_detects_user_changes(db_session, sample_user_data):
     """Test that Discord OAuth flow detects and handles existing user data changes"""
-    from unittest.mock import patch, AsyncMock
-    from database.models.role import Role
-    
     # Create a role that grants access for the OAuth flow
     access_role = Role(
         role_discord_id="fake_role_id",
@@ -220,11 +221,7 @@ def test_discord_oauth_detects_user_changes(db_session, sample_user_data):
         mock_is_member.return_value = (True, "fake_guild")
         mock_check_roles.return_value = updated_guild_member_info
         
-        # Import and call the discord_callback function
-        from routes.auth.discord_oauth import discord_callback
-        
         # Simulate the OAuth callback
-        import asyncio
         response = asyncio.run(discord_callback(code="fake_code"))
         
         # Check if user data was updated in the database
