@@ -19,7 +19,7 @@ depends_on: Union[str, Sequence[str], None] = None
 
 
 def upgrade() -> None:
-    op.create_table('role_permission',
+    op.create_table('roles_permissions',
         sa.Column('role_id', sa.Integer(), nullable=False),
         sa.Column('permission_id', sa.Integer(), nullable=False),
         sa.ForeignKeyConstraint(['role_id'], ['roles.role_id'], ondelete='CASCADE'),
