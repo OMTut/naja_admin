@@ -16,6 +16,8 @@ from database.models.user import UserStatus
 
 
 from .session import get_session, is_session_expired, update_session_access
+from services.role_access import check_user_has_access_role, get_user_access_roles
+from services.sync_user_roles import sync_user_roles
 
 router = APIRouter()
 
@@ -186,12 +188,26 @@ async def discord_callback(code: str = None, error: str = None):
                 url=f"{frontend_url}/?error=not_in_target_guild&message=Access Denied. Approved Membership in Discord Required."
             )
             
-            # Check user's roles in the guild (optional - specify required roles)
-            # required_roles = ["123456789", "987654321"]  # Role IDs for specific ranks
+        # Check user's roles in the guild (optional - specify required roles)
+        # required_roles = ["123456789", "987654321"]  # Role IDs for specific ranks
         guild_id = guild_id or os.getenv("TARGET_SERVER_ID")
         guild_member_info = await check_user_guild_roles(access_token, guild_id)
             
         print(f"User roles in {target_guild}: {guild_member_info.get('roles', [])}")
+        
+        # Check if user's Discord roles grant access to the application
+        user_discord_roles = guild_member_info.get('roles', [])
+        has_access = check_user_has_access_role(user_discord_roles)
+        
+        if not has_access:
+            # Get role details for better error message
+            user_role_details = get_user_access_roles(user_discord_roles)
+            print(f"Access denied - user's roles: {user_role_details}")
+            return RedirectResponse(
+                url=f"{frontend_url}/?error=insufficient_role&message=Access Denied. You need an approved role in the Discord server to access this application."
+            )
+        
+        print(f"Access granted - user has required roles")
 
         # Check if user already exists
         existing_user = get_user_by_discord_id(discord_user["id"])
@@ -208,6 +224,9 @@ async def discord_callback(code: str = None, error: str = None):
                 return RedirectResponse(
                     url=f"{frontend_url}/?error=pending_approval&message=Your account is pending admin approval"
                 )
+            
+            # If user is approved: sync user_role table
+            sync_user_roles(existing_user.id, user_discord_roles)
 
             # If user is approved, create session and redirect
             print(f"User {existing_user.id} is approved, creating session")

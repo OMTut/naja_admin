@@ -26,6 +26,19 @@ def upgrade() -> None:
     # load env vars
     load_dotenv()
 
+    # Ensure junction tables exist (fix for missing users_roles)
+    try:
+        op.create_table('users_roles',
+            sa.Column('user_id', sa.INTEGER(), autoincrement=False, nullable=False),
+            sa.Column('role_id', sa.INTEGER(), autoincrement=False, nullable=False),
+            sa.ForeignKeyConstraint(['role_id'], ['roles.role_id'], name='users_roles_role_id_fkey', ondelete='CASCADE'),
+            sa.ForeignKeyConstraint(['user_id'], ['users.id'], name='users_roles_user_id_fkey', ondelete='CASCADE'),
+            sa.PrimaryKeyConstraint('user_id', 'role_id', name='users_roles_pkey')
+        )
+    except Exception:
+        # Table might already exist, that's OK
+        pass
+
     # Clear existing data
     op.execute("DELETE FROM roles")
 

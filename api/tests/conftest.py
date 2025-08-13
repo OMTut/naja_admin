@@ -47,33 +47,66 @@ def setup_test_database():
         print(f"❌ Test database connection failed: {e}")
         raise
     
-    # Run Alembic migrations to create all tables (including junction tables)
+    # Create all tables using SQLAlchemy models (simpler and more reliable for tests)
     try:
-        # Set the database URL for migrations
-        os.environ['DATABASE_URL'] = TEST_DATABASE_URL
+        Base.metadata.create_all(bind=test_engine)
         
-        # Configure Alembic
-        alembic_cfg = Config("alembic.ini")
-        alembic_cfg.set_main_option("sqlalchemy.url", TEST_DATABASE_URL)
+        # Manually create junction tables that are not defined in models
+        with test_engine.connect() as conn:
+            # Create users_roles junction table
+            conn.execute(text("""
+                CREATE TABLE IF NOT EXISTS users_roles (
+                    user_id INTEGER NOT NULL,
+                    role_id INTEGER NOT NULL,
+                    PRIMARY KEY (user_id, role_id),
+                    FOREIGN KEY(user_id) REFERENCES users (id) ON DELETE CASCADE,
+                    FOREIGN KEY(role_id) REFERENCES roles (role_id) ON DELETE CASCADE
+                )
+            """))
+            
+            # Create users_permissions junction table if needed
+            conn.execute(text("""
+                CREATE TABLE IF NOT EXISTS users_permissions (
+                    user_id INTEGER NOT NULL,
+                    permission_id INTEGER NOT NULL,
+                    PRIMARY KEY (user_id, permission_id),
+                    FOREIGN KEY(user_id) REFERENCES users (id) ON DELETE CASCADE,
+                    FOREIGN KEY(permission_id) REFERENCES permissions (permission_id) ON DELETE CASCADE
+                )
+            """))
+            
+            # Create roles_permissions junction table if needed
+            conn.execute(text("""
+                CREATE TABLE IF NOT EXISTS roles_permissions (
+                    role_id INTEGER NOT NULL,
+                    permission_id INTEGER NOT NULL,
+                    PRIMARY KEY (role_id, permission_id),
+                    FOREIGN KEY(role_id) REFERENCES roles (role_id) ON DELETE CASCADE,
+                    FOREIGN KEY(permission_id) REFERENCES permissions (permission_id) ON DELETE CASCADE
+                )
+            """))
+            
+            conn.commit()
         
-        # Run migrations
-        command.upgrade(alembic_cfg, "head")
-        print("✅ Test database migrations applied successfully")
+        print("✅ Test database tables created successfully")
     except Exception as e:
-        print(f"❌ Failed to apply test database migrations: {e}")
-        # Fallback to create_all if migrations fail
-        try:
-            Base.metadata.create_all(bind=test_engine)
-            print("✅ Test database tables created with fallback method")
-        except Exception as fallback_e:
-            print(f"❌ Fallback table creation also failed: {fallback_e}")
-            raise
+        print(f"❌ Failed to create test database tables: {e}")
     
     yield
     
     # Cleanup: Drop all tables after tests
     print("\n🧹 Cleaning up test database")
-    Base.metadata.drop_all(bind=test_engine)
+    try:
+        # Drop junction tables first to avoid foreign key constraint issues
+        with test_engine.connect() as conn:
+            conn.execute(text("DROP TABLE IF EXISTS users_roles CASCADE"))
+            conn.execute(text("DROP TABLE IF EXISTS users_permissions CASCADE"))
+            conn.execute(text("DROP TABLE IF EXISTS roles_permissions CASCADE"))
+            conn.commit()
+        # Then drop the main tables
+        Base.metadata.drop_all(bind=test_engine)
+    except Exception as e:
+        print(f"⚠️ Cleanup warning: {e}")
 
 @pytest.fixture
 def db_session(setup_test_database):
@@ -88,7 +121,10 @@ def db_session(setup_test_database):
         patch('database.operations.users.get_server_nickname_by_user_id.SessionLocal') as mock_nickname_session, \
         patch('database.operations.users.update_user_discord_info.SessionLocal') as mock_update_session, \
         patch('database.operations.role_operations.SessionLocal') as mock_role_session, \
-        patch('database.operations.permission_operations.SessionLocal') as mock_permission_session:
+        patch('database.operations.permission_operations.SessionLocal') as mock_permission_session, \
+        patch('database.operations.users_roles.SessionLocal') as mock_users_roles_session, \
+        patch('services.role_access.SessionLocal') as mock_role_access_session, \
+        patch('services.sync_user_roles.SessionLocal') as mock_sync_roles_session:
         
         # Return a fresh session each time SessionLocal() is called
         mock_session_local.return_value = session
@@ -99,6 +135,9 @@ def db_session(setup_test_database):
         mock_update_session.return_value = session
         mock_role_session.return_value = session
         mock_permission_session.return_value = session
+        mock_users_roles_session.return_value = session
+        mock_role_access_session.return_value = session
+        mock_sync_roles_session.return_value = session
         
         try:
             yield session

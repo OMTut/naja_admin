@@ -171,6 +171,17 @@ def test_update_user_discord_info(db_session, sample_user_data):
 def test_discord_oauth_detects_user_changes(db_session, sample_user_data):
     """Test that Discord OAuth flow detects and handles existing user data changes"""
     from unittest.mock import patch, AsyncMock
+    from database.models.role import Role
+    
+    # Create a role that grants access for the OAuth flow
+    access_role = Role(
+        role_discord_id="fake_role_id",
+        role_name="Access Role",
+        role_description="Test role that grants access",
+        grants_access=True
+    )
+    db_session.add(access_role)
+    db_session.commit()
     
     # First, create an existing user with original data
     original_user = store_user_pending_approval(sample_user_data)
