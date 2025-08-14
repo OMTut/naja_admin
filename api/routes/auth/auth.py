@@ -14,6 +14,10 @@ from database.operations.users.get_user_by_id import (
 )
 from database.operations.session_operations import get_user_from_session
 from database.models.user import UserStatus
+from services.sync_user_roles import get_user_current_roles
+from services.role_access import check_user_has_access_role
+from services.sync_user_roles import sync_user_roles
+from services.discord_api import get_user_roles_from_discord_api
 
 router = APIRouter()
 
@@ -32,7 +36,7 @@ async def get_current_user(request: Request):
             "message": "No session found."
         }
     
-    # If yes, is it valid?
+    # If yes, is the session valid?
     session = get_session(session_id)
     if not session or not is_session_valid(session):
         return {
@@ -46,6 +50,24 @@ async def get_current_user(request: Request):
         return {
             "authenticated": False,
             "message": "User not found."
+        }
+    
+    # Check if user still has an access granting role
+    db_user_roles = get_user_current_roles(user.id)
+    db_user_discord_roles = [role['discord_id'] for role in db_user_roles]
+
+    live_discord_roles = await get_user_roles_from_discord_api(user.discord_id)
+    has_access = check_user_has_access_role(live_discord_roles)
+
+    # sync if roles have changed
+    if set(db_user_discord_roles) != set(live_discord_roles):
+        sync_user_roles(user.id, live_discord_roles)
+    
+    if not has_access:
+        print(f"Session Check: Access - Role denied.")
+        return {
+            "authenticated": False,
+            "message": "Access denied."
         }
     
     # Update session last accessed time
