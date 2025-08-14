@@ -227,3 +227,24 @@ def invalidate_all_user_sessions(user_id: int) -> int:
         return 0
     finally:
         db.close()
+
+def delete_all_user_sessions(user_id: int) -> int:
+    """
+    Definition: delete_all_user_sessions
+    Params: user_id: int (id from db)
+    Return: number of sessions deleted
+    Given a user id, delete all the sessions associated with it from the db
+    """
+    db: DBSession = SessionLocal()
+    try:
+        deleted_count = db.query(Session).filter(
+            Session.user_id == user_id
+        ).delete()
+        db.commit()
+        return deleted_count
+    except Exception as e:
+        db.rollback()
+        print(f"Error deleting user sessionf for {user_id}: {e}")
+        return 0
+    finally:
+        db.close()

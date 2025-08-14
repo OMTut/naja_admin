@@ -13,6 +13,8 @@ from database.operations.users.get_user_by_id import (
     get_user_by_id
 )
 from database.operations.session_operations import get_user_from_session
+from database.operations.session_operations import invalidate_all_user_sessions
+from database.operations.session_operations import delete_all_user_sessions
 from database.models.user import UserStatus
 from services.sync_user_roles import get_user_current_roles
 from services.role_access import check_user_has_access_role
@@ -65,6 +67,8 @@ async def get_current_user(request: Request):
     
     if not has_access:
         print(f"Session Check: Access - Role denied.")
+        deleted_count = delete_all_user_sessions(user.id)
+        print(f"Deleted {deleted_count} sessions for user {user.id}")
         return {
             "authenticated": False,
             "message": "Access denied."
