@@ -20,6 +20,7 @@ def check_user_has_access_role(discord_role_ids: list[str]) -> bool:
     try:
         # Use operations layer to get role details
         user_roles = get_roles_by_discord_ids(discord_role_ids)
+        print(f"Checking User access.\n {user_roles}")
         
         # Check if any roles grant access
         access_granting_roles = [role for role in user_roles if role["grants_access"]]

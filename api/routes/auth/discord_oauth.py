@@ -188,42 +188,46 @@ async def discord_callback(code: str = None, error: str = None):
                 url=f"{frontend_url}/?error=not_in_target_guild&message=Access Denied. Approved Membership in Discord Required."
             )
             
-        # Check user's roles in the guild (optional - specify required roles)
-        # required_roles = ["123456789", "987654321"]  # Role IDs for specific ranks
+        # Check user's roles in the guild
         guild_id = guild_id or os.getenv("TARGET_SERVER_ID")
         guild_member_info = await check_user_guild_roles(access_token, guild_id)
             
+        # Debug
         print(f"User roles in {target_guild}: {guild_member_info.get('roles', [])}")
-        
-        # Check if user's Discord roles grant access to the application
-        user_discord_roles = guild_member_info.get('roles', [])
-        has_access = check_user_has_access_role(user_discord_roles)
-        
-        if not has_access:
-            # Get role details for better error message
-            user_role_details = get_user_access_roles(user_discord_roles)
-            print(f"Access denied - user's roles: {user_role_details}")
-            return RedirectResponse(
-                url=f"{frontend_url}/?error=insufficient_role&message=Access Denied. You need an approved role in the Discord server to access this application."
-            )
-        
-        print(f"Access granted - user has required roles")
 
         # Check if user already exists
         existing_user = get_user_by_discord_id(discord_user["id"])
         print(existing_user)
         if existing_user:
+            
             # Check if Discord data (username, email) has changed
+            # sync if it has
             if existing_user.discord_username != discord_user['username'] or \
                 existing_user.email != discord_user.get('email') or \
                 existing_user.server_nickname != guild_member_info.get('nickname'):
                 update_user_discord_info(existing_user.id, discord_user)
             
             # Check if user is approved
+            # Send them home if false. Continue if true
             if not is_user_approved(existing_user):
                 return RedirectResponse(
                     url=f"{frontend_url}/?error=pending_approval&message=Your account is pending admin approval"
                 )
+            
+            # Check if user's Discord roles grant access to the application
+            # Send them home if false. Continue if true.
+            user_discord_roles = guild_member_info.get('roles', [])
+            has_access = check_user_has_access_role(user_discord_roles)
+            
+            if not has_access:
+                # Get role details for better error message
+                user_role_details = get_user_access_roles(user_discord_roles)
+                print(f"Access denied - user's roles: {user_role_details}")
+                return RedirectResponse(
+                    url=f"{frontend_url}/?error=insufficient_role&message=Access Denied. You need an approved role in the Discord server to access this application."
+                )
+            
+            print(f"Access granted - user has required roles")
             
             # If user is approved: sync user_role table
             sync_user_roles(existing_user.id, user_discord_roles)
