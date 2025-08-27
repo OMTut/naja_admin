@@ -14,7 +14,6 @@ class BackgroundTaskManager:
     def __init__(self):
         # Configuration from environment variables
         self.session_cleanup_interval = int(os.getenv("SESSION_CLEANUP_INTERVAL_HOURS", "1"))
-        self.inactive_cleanup_interval = int(os.getenv("INACTIVE_CLEANUP_INTERVAL_HOURS", "24"))
         
         # Task tracking
         self.tasks: Dict[str, asyncio.Task] = {}
@@ -41,15 +40,8 @@ class BackgroundTaskManager:
             name="session_cleanup"
         )
         
-        # Start inactive session cleanup task (runs less frequently)
-        self.tasks["inactive_cleanup"] = asyncio.create_task(
-            self._inactive_cleanup_loop(),
-            name="inactive_cleanup"
-        )
-        
         print(f"✅ Background tasks started:")
         print(f"   • Session cleanup: every {self.session_cleanup_interval} hour(s)")
-        print(f"   • Inactive cleanup: every {self.inactive_cleanup_interval} hour(s)")
     
     async def stop(self):
         """Stop all background tasks gracefully"""
@@ -101,32 +93,6 @@ class BackgroundTaskManager:
                 # Wait a bit before retrying to avoid tight error loops
                 await asyncio.sleep(300)  # 5 minutes
     
-    async def _inactive_cleanup_loop(self):
-        """Background loop for inactive session cleanup (runs less frequently)"""
-        while self._running:
-            try:
-                # Wait for the specified interval (typically 24 hours)
-                await asyncio.sleep(self.inactive_cleanup_interval * 3600)
-                
-                if not self._running:
-                    break
-                
-                # Import the function from your existing cleanup script
-                from database.operations.cleanup_sessions import cleanup_old_inactive_sessions
-                
-                # Clean up sessions inactive for 30+ days
-                inactive_count = cleanup_old_inactive_sessions(30)
-                
-                if inactive_count > 0:
-                    print(f"🧹 [{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}] "
-                          f"Inactive cleanup: removed {inactive_count} old sessions")
-                
-            except asyncio.CancelledError:
-                print("Inactive cleanup task cancelled")
-                break
-            except Exception as e:
-                print(f"❌ Error in inactive cleanup: {e}")
-                await asyncio.sleep(3600)  # Wait 1 hour before retrying
     
     def get_status(self) -> Dict[str, Any]:
         """Get current status of background tasks"""
@@ -134,8 +100,7 @@ class BackgroundTaskManager:
             "running": self._running,
             "active_tasks": list(self.tasks.keys()),
             "configuration": {
-                "session_cleanup_interval_hours": self.session_cleanup_interval,
-                "inactive_cleanup_interval_hours": self.inactive_cleanup_interval
+                "session_cleanup_interval_hours": self.session_cleanup_interval
             },
             "statistics": self.stats.copy()
         }
@@ -145,18 +110,13 @@ class BackgroundTaskManager:
         try:
             expired_count = cleanup_expired_sessions()
             
-            # Also try inactive cleanup
-            from database.operations.cleanup_sessions import cleanup_old_inactive_sessions
-            inactive_count = cleanup_old_inactive_sessions(30)
-            
             # Update stats
-            self.stats["total_sessions_cleaned"] += expired_count + inactive_count
+            self.stats["total_sessions_cleaned"] += expired_count
             self.stats["last_cleanup"] = datetime.now()
             
             return {
                 "expired_sessions_cleaned": expired_count,
-                "inactive_sessions_cleaned": inactive_count,
-                "total_cleaned": expired_count + inactive_count
+                "total_cleaned": expired_count
             }
         except Exception as e:
             print(f"❌ Error in manual cleanup: {e}")

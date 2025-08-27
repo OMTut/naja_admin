@@ -3,33 +3,30 @@ from sqlalchemy.exc import IntegrityError
 from typing import Optional
 from datetime import datetime, timedelta
 import secrets
+import os
 
 from ..models.session import Session
 from ..models.user import User
 from ..connection import SessionLocal
 
 
-def create_session(user_id: int, expires_in_days: int = 7, lazy_cleanup: bool = True) -> Optional[str]:
+def create_session(user_id: int, expires_in_days: Optional[int] = None) -> Optional[str]:
     """
     Create a new session for the user in the database
     
     Args:
         user_id: The ID of the user
-        expires_in_days: Number of days until session expires (default 7)
-        lazy_cleanup: Whether to clean up expired sessions during creation
+        expires_in_days: Number of days until session expires
     
     Returns:
         Session ID if successful, None otherwise
     """
     db: DBSession = SessionLocal()
     try:
-        # Lazy cleanup: remove expired sessions when creating new ones
-        if lazy_cleanup:
-            expired_count = db.query(Session).filter(
-                Session.expires_at < datetime.utcnow()
-            ).delete()
-            if expired_count > 0:
-                print(f"Lazy cleanup: removed {expired_count} expired sessions")
+        # Use provided expires_in_days or fall back to environment variable
+        if expires_in_days is None:
+            expires_in_days = int(os.getenv("SESSION_LIFESPAN"))
+        
         # Generate a secure session ID
         session_id = secrets.token_urlsafe(32)
         
@@ -248,3 +245,5 @@ def delete_all_user_sessions(user_id: int) -> int:
         return 0
     finally:
         db.close()
+
+
