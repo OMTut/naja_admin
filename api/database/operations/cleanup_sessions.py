@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 """
 Session Cleanup Script
-Can be run manually or via cron job to clean up expired and old sessions
+Can be run manually or via cron job to clean up expired and old sessions.
+Currently, it's being used as a background task from the main api app
 """
 
 import sys

@@ -1,9 +1,12 @@
 import os
+from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from dotenv import load_dotenv
 from routes.auth import router as auth_router
+from routes.server_admin import router as admin_router
 from database.connection import test_db_connection
+from services.background_tasks import start_background_tasks, stop_background_tasks, get_background_tasks_status
 from sqlalchemy import text
 
 # Load environment variables
@@ -12,9 +15,20 @@ load_dotenv()
 # Test database connection
 test_db_connection()
 
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # Startup: Start background tasks
+    await start_background_tasks()
+    try:
+        yield
+    finally:
+        # Shutdown: Stop background tasks
+        await stop_background_tasks()
+
 app = FastAPI(
     title=os.getenv("APP_NAME", "Auth API"),
-    version=os.getenv("APP_VERSION", "1.0.0")
+    version=os.getenv("APP_VERSION", "1.0.0"),
+    lifespan=lifespan
 )
 
 # Add CORS middleware for your frontend
@@ -33,10 +47,16 @@ async def root():
 
 @app.get("/health")
 async def health_check():
-    return {"status": "healthy"}
+    return {
+        "status": "healthy",
+        "background_tasks": get_background_tasks_status()
+    }
 
 # Include auth routes
 app.include_router(auth_router, prefix="/api/auth", tags=["authentication"])
+
+# Include admin routes  
+app.include_router(admin_router, prefix="/api/admin", tags=["administration"])
 
 if __name__ == "__main__":
     import uvicorn
