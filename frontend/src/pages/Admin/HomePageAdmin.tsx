@@ -10,8 +10,11 @@ const HomePageAdmin = () => {
       <MainLogo />
       <p>This is the Admin Home page.</p>
       <div style={{ marginBottom: '20px' }}>
-        <button onClick={() => navigate('/admin/roles')} style={{ padding: '10px 20px', fontSize: '16px' }}>
+        <button onClick={() => navigate('/admin/roles')} style={{ padding: '10px 20px', fontSize: '16px', marginRight: '10px' }}>
           Manage Roles
+        </button>
+        <button onClick={() => navigate('/admin/users')} style={{ padding: '10px 20px', fontSize: '16px' }}>
+          Manage Users
         </button>
       </div>
       <Navigation onSelectView={(view) => console.log(view)} />

@@ -6,6 +6,7 @@ from dotenv import load_dotenv
 from routes.auth import router as auth_router
 from routes.server_admin import router as admin_router
 from routes.roles import router as roles_router
+from routes.users import router as users_router
 from database.connection import test_db_connection
 from services.background_tasks import start_background_tasks, stop_background_tasks, get_background_tasks_status
 from sqlalchemy import text
@@ -61,6 +62,9 @@ app.include_router(admin_router, prefix="/api/admin", tags=["administration"])
 
 # Include role routes
 app.include_router(roles_router, prefix="/api/admin/roles", tags=["roles"])
+
+# Include user routes
+app.include_router(users_router, prefix="/api/admin/users", tags=["users"])
 
 if __name__ == "__main__":
     import uvicorn
