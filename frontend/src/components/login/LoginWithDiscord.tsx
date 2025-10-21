@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import MainLogo, { logoTypingTime } from '../ui/MainLogo';
+import MainLogo from '../ui/MainLogo';
 import TypewriterText from '../ui/TypewriterText';
 //import SequentialTypewriter from '../ui/SequentialTypewriter';
 
@@ -14,10 +14,10 @@ const LoginWithDiscord: React.FC<LoginWithDiscordProps> = ({ message }) => {
     const [showRequirements, setShowRequirements] = useState(false);
     
     useEffect(() => {
-        // Show requirements text after logo finishes typing + small delay
+        // Show requirements text after logo loads + small delay
         const timer = setTimeout(() => {
             setShowRequirements(true);
-        }, logoTypingTime + 500); // 500ms delay after logo completes
+        }, 1000); // 1 second delay after logo loads
         
         return () => clearTimeout(timer);
     }, []);

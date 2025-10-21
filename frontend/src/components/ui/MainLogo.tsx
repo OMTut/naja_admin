@@ -1,43 +1,28 @@
-import TypewriterText from './TypewriterText';
-
-export const logoText = `    _   __        _           ______     __      __         
-   / | / /___ _  (_)___ _    / ____/____/ /_  __/_/         
-  /  |/ / __ \`/ / / __ \`/   / __/ / ___/ __ \\/ __ \\         
- / /|  / /_/ / / / /_/ /   / /___/ /__/ / / / /_/ /         
-/_/ |_/\\__,_/_/ /\\__,_/   /_____/\\___/_/ /_/\\____/          
-           /___/                                            `;
-
-export const logoTypingTime = logoText.length * 30; // 30ms per character
+import { useState, useEffect } from 'react';
+import { useSidebar } from '../../contexts/SidebarContext';
+import logoBanner from '../../assets/logo_banner.svg';
+import logoOnly from '../../assets/logo_only_background_resaved2.svg';
+import '../../styles/MainLogo.css';
 
 const MainLogo = () => {
+   const { isMobile, toggleSidebar } = useSidebar();
+
+   const handleLogoClick = () => {
+      if (isMobile) {
+         toggleSidebar();
+      }
+   };
+
    return (
-      <div className="logo">
-         <TypewriterText
-            text={logoText}
-            speed={12}
-            cursorChar="_"
-            cursorBlinkRate={500}
-            preserveLineBreaks={true}
-            hideCursorAfterComplete={true}
-         >
-            {({ displayedText, cursor }) => (
-               <pre style={{
-                  fontFamily: 'monospace',
-                  fontSize: '14px',
-                  lineHeight: '1.2',
-                  margin: 0,
-                  whiteSpace: 'pre'
-               }}>
-                  {displayedText.split('\n').map((line, index, array) => (
-                     <span key={index}>
-                        {line}
-                        {index < array.length - 1 && '\n'}
-                     </span>
-                  ))}
-                  {cursor}
-               </pre>
-            )}
-         </TypewriterText>
+      <div 
+         className={`main-logo ${isMobile ? 'clickable' : ''}`}
+         onClick={handleLogoClick}
+      >
+         <img 
+            src={isMobile ? logoOnly : logoBanner}
+            alt="Naja Admin Logo"
+            className={`logo-image ${isMobile ? 'logo-mobile' : 'logo-desktop'}`}
+         />
       </div>
    );
 };

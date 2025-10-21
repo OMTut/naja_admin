@@ -1,0 +1,97 @@
+/* TopBar Component Styles */
+.top-bar {
+  height: 80px;
+  background-color: #0E2226;
+  display: flex;
+  align-items: center;
+  padding: 0 20px;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  width: 100%;
+  z-index: 1001;
+  box-sizing: border-box;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+.top-bar-content {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+}
+
+.top-bar-left {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+
+.breadcrumb {
+  display: flex;
+  align-items: center;
+  color: #CCAC31;
+  font-family: 'Courier New', 'Monaco', 'Menlo', monospace;
+  font-size: 16px;
+}
+
+.terminal-prompt::before {
+  content: '> ';
+  color: #CCAC31;
+  margin-right: 4px;
+}
+
+.top-bar-actions {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+.terminal-button {
+  background: transparent;
+  border: 1px solid #CCAC31;
+  color: #CCAC31;
+  padding: 8px 12px;
+  font-family: 'Courier New', 'Monaco', 'Menlo', monospace;
+  font-size: 12px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.terminal-button:hover {
+  background-color: rgba(0, 255, 0, 0.1);
+}
+
+.terminal-button:active {
+  background-color: rgba(0, 255, 0, 0.2);
+}
+
+.terminal-button span {
+  filter: grayscale(100%) brightness(2);
+}
+
+/* Mobile responsiveness */
+@media (max-width: 768px) {
+  .top-bar {
+    height: 60px;
+    padding: 0 16px;
+  }
+  
+  .breadcrumb {
+    font-size: 14px;
+  }
+  
+  .terminal-button {
+    padding: 6px 8px;
+    font-size: 11px;
+    gap: 4px;
+  }
+  
+  .terminal-button span {
+    font-size: 14px;
+  }
+}

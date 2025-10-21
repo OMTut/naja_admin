@@ -1,5 +1,3 @@
-import MainLogo from "../../components/ui/MainLogo";
-import Navigation from "../../components/ui/Navigation";
 import { useNavigate } from "react-router-dom";
 
 const HomePageAdmin = () => {
@@ -7,17 +5,42 @@ const HomePageAdmin = () => {
 
   return (
     <div>
-      <MainLogo />
-      <p>This is the Admin Home page.</p>
-      <div style={{ marginBottom: '20px' }}>
-        <button onClick={() => navigate('/admin/roles')} style={{ padding: '10px 20px', fontSize: '16px', marginRight: '10px' }}>
-          Manage Roles
-        </button>
-        <button onClick={() => navigate('/admin/users')} style={{ padding: '10px 20px', fontSize: '16px' }}>
-          Manage Users
-        </button>
+      <h1>Admin Dashboard</h1>
+      <p>Welcome to the administration panel.</p>
+      
+      <div className="admin-actions" style={{ marginTop: '30px' }}>
+        <h2>Quick Actions</h2>
+        <div style={{ display: 'flex', gap: '10px', marginTop: '15px' }}>
+          <button 
+            onClick={() => navigate('/admin/roles')} 
+            style={{ 
+              padding: '12px 24px', 
+              fontSize: '16px', 
+              backgroundColor: 'transparent',
+              border: '1px solid #00ff00',
+              color: '#00ff00',
+              cursor: 'pointer',
+              fontFamily: 'inherit'
+            }}
+          >
+            Manage Roles
+          </button>
+          <button 
+            onClick={() => navigate('/admin/users')} 
+            style={{ 
+              padding: '12px 24px', 
+              fontSize: '16px', 
+              backgroundColor: 'transparent',
+              border: '1px solid #00ff00',
+              color: '#00ff00',
+              cursor: 'pointer',
+              fontFamily: 'inherit'
+            }}
+          >
+            Manage Users
+          </button>
+        </div>
       </div>
-      <Navigation onSelectView={(view) => console.log(view)} />
     </div>
   );
 };

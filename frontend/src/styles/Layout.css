@@ -1,0 +1,42 @@
+/* Layout Component Styles */
+.app-layout {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  background-color: #0E2226;
+}
+
+.layout-body {
+  display: flex;
+  flex: 1;
+}
+
+.main-content {
+  flex: 1;
+  margin-left: 280px; /* Width of sidebar */
+  min-height: calc(100vh - 80px); /* Subtract TopBar height */
+  background-color: #0E2226;
+}
+
+.content-wrapper {
+  padding: 20px;
+  max-width: 1200px;
+  margin: 0 auto;
+  color: #00ff00;
+  font-family: 'Courier New', 'Monaco', 'Menlo', monospace;
+}
+
+/* Mobile layout adjustments */
+@media (max-width: 480px) {
+  .app-layout {
+    flex-direction: column;
+  }
+  
+  .main-content {
+    margin-left: 0;
+  }
+  
+  .content-wrapper {
+    padding: 16px;
+  }
+}

@@ -1,10 +1,9 @@
-import MainLogo from "../../components/ui/MainLogo";
 import RoleManagement from "../../components/admin/RoleManagement";
 
 const RolesPage = () => {
   return (
     <div>
-      <MainLogo />
+      <h1>Role Management</h1>
       <RoleManagement />
     </div>
   );

@@ -1,10 +1,9 @@
-import MainLogo from "../../components/ui/MainLogo";
 import UserManagement from "../../components/admin/UserManagement";
 
 const UsersPage = () => {
   return (
     <div>
-      <MainLogo />
+      <h1>User Management</h1>
       <UserManagement />
     </div>
   );

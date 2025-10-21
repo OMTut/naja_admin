@@ -7,6 +7,7 @@ import UsersPage from "../pages/Admin/UsersPage";
 import LoginPage from "../pages/LoginPage";
 import ProtectedRoute from "../components/auth/ProtectedRoute";
 import PublicRoute from "../components/auth/PublicRoute";
+import Layout from "../components/layout/Layout";
 
 
 const AppRoutes = () => (
@@ -16,7 +17,9 @@ const AppRoutes = () => (
                 path="/" 
                 element={
                     <ProtectedRoute>
-                        <HomePage />
+                        <Layout>
+                            <HomePage />
+                        </Layout>
                     </ProtectedRoute>
                 } 
             />
@@ -24,7 +27,9 @@ const AppRoutes = () => (
                 path="/admin/roles" 
                 element={
                     <ProtectedRoute>
-                        <RolesPage />
+                        <Layout>
+                            <RolesPage />
+                        </Layout>
                     </ProtectedRoute>
                 } 
             />
@@ -32,7 +37,9 @@ const AppRoutes = () => (
                 path="/admin/users" 
                 element={
                     <ProtectedRoute>
-                        <UsersPage />
+                        <Layout>
+                            <UsersPage />
+                        </Layout>
                     </ProtectedRoute>
                 } 
             />
@@ -40,7 +47,9 @@ const AppRoutes = () => (
                 path="/admin"
                 element={
                     <ProtectedRoute>
-                        <HomePageAdmin />
+                        <Layout>
+                            <HomePageAdmin />
+                        </Layout>
                     </ProtectedRoute>
                 } 
             />
