@@ -5,6 +5,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from dotenv import load_dotenv
 from routes.auth import router as auth_router
 from routes.server_admin import router as admin_router
+from routes.roles import router as roles_router
 from database.connection import test_db_connection
 from services.background_tasks import start_background_tasks, stop_background_tasks, get_background_tasks_status
 from sqlalchemy import text
@@ -57,6 +58,9 @@ app.include_router(auth_router, prefix="/api/auth", tags=["authentication"])
 
 # Include admin routes  
 app.include_router(admin_router, prefix="/api/admin", tags=["administration"])
+
+# Include role routes
+app.include_router(roles_router, prefix="/api/admin/roles", tags=["roles"])
 
 if __name__ == "__main__":
     import uvicorn
