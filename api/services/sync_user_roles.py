@@ -4,6 +4,7 @@ from database.operations.users_roles import (
     add_user_role,
     get_roles_by_discord_ids
 )
+from database.operations.role_operations import getRoleIdByDiscordId
 import logging
 
 logger = logging.getLogger(__name__)
@@ -68,6 +69,61 @@ def sync_user_roles(user_id: int, user_discord_roles: list[str]) -> bool:
             logger.info(f"No valid roles to sync for user {user_id}")
             return True
         
+    except Exception as e:
+        logger.error(f"Error syncing roles for user {user_id}: {e}")
+        return False
+
+
+def sync_user_roles_preserving_app(
+    user_id: int,
+    user_discord_roles: list[str],
+    all_guild_role_ids: list[str],
+) -> bool:
+    """
+    Sync a user's Discord roles while preserving any app-only role assignments.
+
+    App-only roles are those whose role_discord_id does not appear in the guild's
+    full role list (all_guild_role_ids). These are kept untouched during the sync.
+
+    Args:
+        user_id: Database user ID
+        user_discord_roles: Discord role IDs currently on the member
+        all_guild_role_ids: All assignable role IDs in the Discord guild
+
+    Returns:
+        bool: True if sync was successful, False otherwise
+    """
+    try:
+        guild_role_set = set(all_guild_role_ids)
+
+        # Identify app-only roles to preserve
+        current_roles = get_user_roles(user_id)
+        app_only_discord_ids = [
+            r["role_discord_id"] for r in current_roles
+            if r["role_discord_id"] not in guild_role_set
+        ]
+
+        # Discord roles to add
+        valid_discord_roles = get_roles_by_discord_ids(user_discord_roles)
+
+        clear_user_roles(user_id)
+
+        for role in valid_discord_roles:
+            role_id = getRoleIdByDiscordId(role["role_discord_id"])
+            if role_id:
+                add_user_role(user_id, role_id)
+
+        for discord_id in app_only_discord_ids:
+            role_id = getRoleIdByDiscordId(discord_id)
+            if role_id:
+                add_user_role(user_id, role_id)
+
+        logger.info(
+            f"Synced {len(valid_discord_roles)} Discord role(s) and preserved "
+            f"{len(app_only_discord_ids)} app-only role(s) for user {user_id}"
+        )
+        return True
+
     except Exception as e:
         logger.error(f"Error syncing roles for user {user_id}: {e}")
         return False

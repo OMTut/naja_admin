@@ -95,13 +95,14 @@ async def logout(request: Request, response: Response):
     Logout user by clearing session
     """
     session_id = request.cookies.get("session_id")
-    
-    # Invalidate session in storage
+
+    # Invalidate all sessions for this user across all devices
     if session_id:
-        from .session import invalidate_session
-        invalidate_session(session_id)
-    
-    # Clear the session cookie
+        user = get_user_from_session(session_id)
+        if user:
+            delete_all_user_sessions(user.id)
+
+    # Clear the session cookie on this device
     response.delete_cookie("session_id")
-    
+
     return {"message": "Logged out successfully"}

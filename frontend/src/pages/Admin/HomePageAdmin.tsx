@@ -1,47 +1,29 @@
-import { useNavigate } from "react-router-dom";
+import { useNavigate } from 'react-router-dom';
+import { Stack, Group, Text, Button } from '@mantine/core';
 
 const HomePageAdmin = () => {
   const navigate = useNavigate();
 
   return (
-    <div>
-      <h1>Admin Dashboard</h1>
-      <p>Welcome to the administration panel.</p>
-      
-      <div className="admin-actions" style={{ marginTop: '30px' }}>
-        <h2>Quick Actions</h2>
-        <div style={{ display: 'flex', gap: '10px', marginTop: '15px' }}>
-          <button 
-            onClick={() => navigate('/admin/roles')} 
-            style={{ 
-              padding: '12px 24px', 
-              fontSize: '16px', 
-              backgroundColor: 'transparent',
-              border: '1px solid #00ff00',
-              color: '#00ff00',
-              cursor: 'pointer',
-              fontFamily: 'inherit'
-            }}
-          >
+    <Stack gap="lg">
+      <h1 style={{ margin: 0 }}>Admin Dashboard</h1>
+      <Text>Welcome to the administration panel.</Text>
+
+      <Stack gap="xs">
+        <Text size="md" fw={700} c="#CCAC31" style={{ textTransform: 'uppercase', letterSpacing: '0.05em', fontSize: '13px' }}>
+          Quick Actions
+        </Text>
+        <Group gap="sm">
+          <Button variant="outline" color="najaGold" onClick={() => navigate('/admin/roles')}>
             Manage Roles
-          </button>
-          <button 
-            onClick={() => navigate('/admin/users')} 
-            style={{ 
-              padding: '12px 24px', 
-              fontSize: '16px', 
-              backgroundColor: 'transparent',
-              border: '1px solid #00ff00',
-              color: '#00ff00',
-              cursor: 'pointer',
-              fontFamily: 'inherit'
-            }}
-          >
+          </Button>
+          <Button variant="outline" color="najaGold" onClick={() => navigate('/admin/users')}>
             Manage Users
-          </button>
-        </div>
-      </div>
-    </div>
+          </Button>
+        </Group>
+      </Stack>
+    </Stack>
   );
 };
+
 export default HomePageAdmin;

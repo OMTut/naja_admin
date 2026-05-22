@@ -78,6 +78,28 @@ class UserService {
   }
 
   /**
+   * Replace a user's roles
+   */
+  async setUserRoles(userId: number, roleIds: number[]): Promise<{ roles: import('../../types/user').UserRole[]; warning?: string }> {
+    try {
+      const response = await fetch(`${this.baseUrl}/${userId}/roles`, {
+        method: 'PUT',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(roleIds),
+      });
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.detail || `HTTP error! status: ${response.status}`);
+      }
+      return await response.json();
+    } catch (error) {
+      console.error('Error setting user roles:', error);
+      throw error;
+    }
+  }
+
+  /**
    * Delete a user
    */
   async deleteUser(userId: number): Promise<{ success: boolean; message: string }> {

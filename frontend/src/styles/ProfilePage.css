@@ -1,0 +1,57 @@
+.profile-card {
+  background-color: var(--naja-sidebar);
+  border: 1px solid rgba(204, 172, 49, 0.2);
+}
+
+.profile-avatar {
+  font-size: 22px;
+}
+
+.profile-username {
+  color: var(--naja-gold);
+}
+
+.profile-discord-id {
+  color: var(--naja-text);
+}
+
+.profile-member-since {
+  color: var(--naja-teal);
+}
+
+.profile-section-label {
+  color: var(--naja-gold);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  font-size: 18px;
+  font-weight: 700;
+}
+
+.profile-section-note {
+  color: var(--naja-teal);
+  font-size: 16px;
+}
+
+.profile-fields-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+.profile-fields-left {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.profile-fields-right {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+@media (max-width: 480px) {
+  .profile-fields-grid {
+    grid-template-columns: 1fr;
+  }
+}

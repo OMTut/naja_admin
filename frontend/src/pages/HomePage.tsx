@@ -1,10 +1,10 @@
-const HomePage = () => {
-  return (
-    <div>
-      <h1>Dashboard</h1>
-      <p>Welcome to the Naja Admin Panel.</p>
-      <p>Use the sidebar to navigate to different sections of the application.</p>
-    </div>
-  );
-};
+import { Stack, Text } from '@mantine/core';
+
+const HomePage = () => (
+  <Stack gap="md">
+    <h1 style={{ margin: 0 }}>Dashboard</h1>
+    <Text>Use the sidebar to navigate to different sections of the application.</Text>
+  </Stack>
+);
+
 export default HomePage;

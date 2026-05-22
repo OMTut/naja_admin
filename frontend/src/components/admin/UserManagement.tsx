@@ -1,244 +1,232 @@
 import { useState, useEffect } from 'react';
-import type { User, UserUpdate } from '../../types/user';
+import {
+  Table, Select, Button,
+  Group, Text, Stack, Menu,
+  Modal, MultiSelect,
+} from '@mantine/core';
+import { useDisclosure } from '@mantine/hooks';
+import { IconShield, IconTrash } from '@tabler/icons-react';
+import type { User, UserRole } from '../../types/user';
+import type { Role } from '../../types/role';
 import { userService } from '../../services/admin/userService';
+import { roleService } from '../../services/admin/roleService';
+import { tableStyles, modalStyles, inputStyles, menuStyles } from '../../styles/mantine';
+
+const STATUS_OPTIONS = [
+  { value: 'approved', label: 'Approved' },
+  { value: 'pending',  label: 'Pending'  },
+  { value: 'rejected', label: 'Rejected' },
+  { value: 'banned',   label: 'Banned'   },
+];
+
+const statusSelectStyles = {
+  input: {
+    backgroundColor: 'transparent',
+    border: 'none',
+    padding: 0,
+    height: 'auto',
+    minHeight: 'auto',
+    fontSize: '13px',
+    fontWeight: '600',
+    cursor: 'pointer',
+  },
+};
 
 const UserManagement = () => {
-  const [users, setUsers] = useState<User[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [editingUser, setEditingUser] = useState<User | null>(null);
+  const [users, setUsers]       = useState<User[]>([]);
+  const [allRoles, setAllRoles] = useState<Role[]>([]);
+  const [loading, setLoading]   = useState(true);
+  const [error, setError]       = useState<string | null>(null);
 
-  // Form state
-  const [formData, setFormData] = useState<UserUpdate>({
-    discord_username: '',
-    server_nickname: '',
-    email: '',
-    status: 'pending',
-  });
+  const [editingUser, setEditingUser]         = useState<User | null>(null);
+  const [selectedRoleIds, setSelectedRoleIds] = useState<string[]>([]);
+  const [modalError, setModalError]           = useState<string | null>(null);
+  const [rolesModalOpen, { open: openRoles, close: closeRoles }] = useDisclosure(false);
 
-  // Load users on mount
   useEffect(() => {
-    loadUsers();
+    Promise.all([userService.getAllUsers(), roleService.getAllRoles()])
+      .then(([u, r]) => { setUsers(u); setAllRoles(r); })
+      .catch(() => setError('Failed to load data.'))
+      .finally(() => setLoading(false));
   }, []);
 
-  const loadUsers = async () => {
+  const handleStatusChange = async (userId: number, status: string) => {
     try {
-      setLoading(true);
-      const data = await userService.getAllUsers();
-      setUsers(data);
-      setError(null);
-    } catch (err) {
-      setError('Failed to load users');
-      console.error(err);
-    } finally {
-      setLoading(false);
+      const updated = await userService.updateUser(userId, { status: status as User['status'] });
+      setUsers((prev) => prev.map((u) => u.id === userId ? { ...u, status: updated.status } : u));
+    } catch {
+      setError('Failed to update status.');
     }
   };
 
-  const handleUpdate = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!editingUser) return;
+  const openEditRoles = (user: User) => {
+    setEditingUser(user);
+    setModalError(null);
+    setSelectedRoleIds(
+      user.roles.map((ur) => {
+        const match = allRoles.find((r) => r.role_name === ur.role_name);
+        return match ? String(match.role_id) : '';
+      }).filter(Boolean)
+    );
+    openRoles();
+  };
 
+  const handleSaveRoles = async () => {
+    if (!editingUser) return;
+    setModalError(null);
     try {
-      await userService.updateUser(editingUser.id, formData);
-      setEditingUser(null);
-      resetForm();
-      loadUsers();
-    } catch (err: any) {
-      setError(err.message || 'Failed to update user');
+      const { roles: updatedRoles, warning } = await userService.setUserRoles(
+        editingUser.id,
+        selectedRoleIds.map(Number)
+      );
+      setUsers((prev) =>
+        prev.map((u) => u.id === editingUser.id ? { ...u, roles: updatedRoles as UserRole[] } : u)
+      );
+      closeRoles();
+      if (warning) setError(warning);
+    } catch (err) {
+      setModalError(err instanceof Error ? err.message : 'Failed to update roles.');
     }
   };
 
   const handleDelete = async (userId: number) => {
     if (!confirm('Are you sure you want to delete this user?')) return;
-
     try {
       await userService.deleteUser(userId);
-      loadUsers();
-    } catch (err: any) {
-      setError(err.message || 'Failed to delete user');
+      setUsers((prev) => prev.filter((u) => u.id !== userId));
+    } catch {
+      setError('Failed to delete user.');
     }
   };
 
-  const startEdit = (user: User) => {
-    setEditingUser(user);
-    setFormData({
-      discord_username: user.discord_username,
-      server_nickname: user.server_nickname || '',
-      email: user.email || '',
-      status: user.status,
-    });
-  };
+  const roleSelectData = allRoles.map((r) => ({
+    value: String(r.role_id),
+    label: r.role_name,
+  }));
 
-  const cancelForm = () => {
-    setEditingUser(null);
-    resetForm();
-  };
-
-  const resetForm = () => {
-    setFormData({
-      discord_username: '',
-      server_nickname: '',
-      email: '',
-      status: 'pending',
-    });
-  };
-
-  const getStatusBadgeColor = (status: string) => {
-    switch (status) {
-      case 'approved':
-        return 'green';
-      case 'pending':
-        return 'orange';
-      case 'rejected':
-        return 'red';
-      case 'banned':
-        return 'darkred';
-      default:
-        return 'gray';
-    }
-  };
-
-  if (loading) return <div>Loading users...</div>;
+  if (loading) return <Text c="var(--naja-gold)">Loading users...</Text>;
 
   return (
-    <div style={{ padding: '20px' }}>
-      <h2>User Management</h2>
+    <Stack gap="md">
+      <h1 style={{ margin: 0 }}>User Management</h1>
 
-      {error && (
-        <div style={{ color: 'red', marginBottom: '10px' }}>
-          {error}
-        </div>
-      )}
+      {error && <Text c="red">{error}</Text>}
 
-      {/* Edit Form */}
-      {editingUser && (
-        <form onSubmit={handleUpdate} style={{ marginBottom: '30px', border: '1px solid #ccc', padding: '15px' }}>
-          <h3>Edit User</h3>
-          
-          <div style={{ marginBottom: '10px' }}>
-            <label>
-              Discord ID:
-              <input
-                type="text"
-                value={editingUser.discord_id}
-                disabled
-                style={{ marginLeft: '10px', width: '200px', backgroundColor: '#eee' }}
-              />
-            </label>
-          </div>
+      {/* Edit Roles Modal */}
+      <Modal
+        opened={rolesModalOpen}
+        onClose={closeRoles}
+        title={
+          <Text c="var(--naja-gold)" fw={700}>
+            Edit Roles — {editingUser?.discord_username}
+          </Text>
+        }
+        styles={modalStyles}
+      >
+        <Stack gap="md">
+          <Text size="sm" c="var(--naja-teal)">
+            Note: roles are synced from Discord on each login and may be overwritten.
+          </Text>
+          <MultiSelect
+            label="Assigned Roles"
+            data={roleSelectData}
+            value={selectedRoleIds}
+            onChange={setSelectedRoleIds}
+            styles={inputStyles}
+          />
+          {modalError && <Text size="sm" c="red">{modalError}</Text>}
+          <Group justify="flex-end">
+            <Button variant="outline" color="gray" onClick={closeRoles}>Cancel</Button>
+            <Button color="najaGold" onClick={handleSaveRoles}>Save</Button>
+          </Group>
+        </Stack>
+      </Modal>
 
-          <div style={{ marginBottom: '10px' }}>
-            <label>
-              Discord Username:
-              <input
-                type="text"
-                value={formData.discord_username}
-                onChange={(e) => setFormData({ ...formData, discord_username: e.target.value })}
-                style={{ marginLeft: '10px', width: '200px' }}
-              />
-            </label>
-          </div>
-
-          <div style={{ marginBottom: '10px' }}>
-            <label>
-              Server Nickname:
-              <input
-                type="text"
-                value={formData.server_nickname}
-                onChange={(e) => setFormData({ ...formData, server_nickname: e.target.value })}
-                style={{ marginLeft: '10px', width: '200px' }}
-              />
-            </label>
-          </div>
-
-          <div style={{ marginBottom: '10px' }}>
-            <label>
-              Email:
-              <input
-                type="email"
-                value={formData.email}
-                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                style={{ marginLeft: '10px', width: '250px' }}
-              />
-            </label>
-          </div>
-
-          <div style={{ marginBottom: '10px' }}>
-            <label>
-              Status:
-              <select
-                value={formData.status}
-                onChange={(e) => setFormData({ ...formData, status: e.target.value as any })}
-                style={{ marginLeft: '10px', padding: '5px' }}
-              >
-                <option value="pending">Pending</option>
-                <option value="approved">Approved</option>
-                <option value="rejected">Rejected</option>
-              </select>
-            </label>
-          </div>
-
-          <div>
-            <button type="submit" style={{ marginRight: '10px' }}>
-              Update
-            </button>
-            <button type="button" onClick={cancelForm}>
-              Cancel
-            </button>
-          </div>
-        </form>
-      )}
-
-      {/* Users Table */}
-      <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-        <thead>
-          <tr style={{ borderBottom: '2px solid #000' }}>
-            <th style={{ padding: '10px', textAlign: 'left' }}>ID</th>
-            <th style={{ padding: '10px', textAlign: 'left' }}>Discord ID</th>
-            <th style={{ padding: '10px', textAlign: 'left' }}>Username</th>
-            <th style={{ padding: '10px', textAlign: 'left' }}>Nickname</th>
-            <th style={{ padding: '10px', textAlign: 'left' }}>Email</th>
-            <th style={{ padding: '10px', textAlign: 'left' }}>Status</th>
-            <th style={{ padding: '10px', textAlign: 'left' }}>Actions</th>
-          </tr>
-        </thead>
-        <tbody>
+      <Table striped highlightOnHover styles={tableStyles}>
+        <Table.Thead>
+          <Table.Tr>
+            <Table.Th>User</Table.Th>
+            <Table.Th style={{ width: 130 }}>Status</Table.Th>
+            <Table.Th visibleFrom="sm">Roles</Table.Th>
+            <Table.Th>Actions</Table.Th>
+          </Table.Tr>
+        </Table.Thead>
+        <Table.Tbody>
           {users.map((user) => (
-            <tr key={user.id} style={{ borderBottom: '1px solid #ccc' }}>
-              <td style={{ padding: '10px' }}>{user.id}</td>
-              <td style={{ padding: '10px' }}>{user.discord_id}</td>
-              <td style={{ padding: '10px' }}>{user.discord_username}</td>
-              <td style={{ padding: '10px' }}>{user.server_nickname || '-'}</td>
-              <td style={{ padding: '10px' }}>{user.email || '-'}</td>
-              <td style={{ padding: '10px' }}>
-                <span style={{
-                  backgroundColor: getStatusBadgeColor(user.status),
-                  color: 'white',
-                  padding: '3px 8px',
-                  borderRadius: '4px',
-                  fontSize: '12px'
-                }}>
-                  {user.status.toUpperCase()}
-                </span>
-              </td>
-              <td style={{ padding: '10px' }}>
-                <button onClick={() => startEdit(user)} style={{ marginRight: '5px' }}>
-                  Edit
-                </button>
-                <button onClick={() => handleDelete(user.id)}>
-                  Delete
-                </button>
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
+            <Table.Tr key={user.id}>
 
-      {users.length === 0 && (
-        <p style={{ marginTop: '20px' }}>No users found.</p>
-      )}
-    </div>
+              <Table.Td style={{ width: 330 }}>
+                <Group gap="sm">
+                  <Stack gap={2}>
+                    <Text size="sm" fw={600} c="var(--naja-text)">{user.discord_username}</Text>
+                    {user.server_nickname && (
+                      <Text size="xs" c="var(--naja-teal)">{user.server_nickname}</Text>
+                    )}
+                  </Stack>
+                </Group>
+              </Table.Td>
+
+              <Table.Td style={{ width: 150 }}>
+                <Select
+                  data={STATUS_OPTIONS}
+                  value={user.status}
+                  onChange={(val) => val && handleStatusChange(user.id, val)}
+                  size="xs"
+                  styles={{
+                    ...statusSelectStyles,
+                    input: {
+                      ...statusSelectStyles.input,
+                      color: user.status === 'approved' ? 'var(--naja-gold)'
+                           : user.status === 'pending'  ? 'var(--naja-teal)'
+                           : user.status === 'rejected' ? '#ff6b6b'
+                           : '#888',
+                    },
+                  }}
+                />
+              </Table.Td>
+
+              <Table.Td visibleFrom="sm">
+                <Text size="sm" c="var(--naja-text)">
+                  {user.roles.length > 0
+                    ? user.roles.map((r) => r.role_name).join(', ')
+                    : <Text size="xs" c="dimmed">—</Text>
+                  }
+                </Text>
+              </Table.Td>
+
+              <Table.Td>
+                <Menu position="bottom-end" withArrow arrowSize={8} styles={menuStyles}>
+                  <Menu.Target>
+                    <Button variant="subtle" color="gray" size="xs" px={6}>
+                      ...
+                    </Button>
+                  </Menu.Target>
+                  <Menu.Dropdown>
+                    <Menu.Item
+                      leftSection={<IconShield size={14} stroke={1.5} />}
+                      onClick={() => openEditRoles(user)}
+                    >
+                      Edit Roles
+                    </Menu.Item>
+                    <Menu.Divider style={{ borderColor: 'rgba(204, 172, 49, 0.2)' }} />
+                    <Menu.Item
+                      leftSection={<IconTrash size={14} stroke={1.5} />}
+                      onClick={() => handleDelete(user.id)}
+                      styles={{ item: { ...menuStyles.item, color: '#ff6b6b' } }}
+                    >
+                      Delete
+                    </Menu.Item>
+                  </Menu.Dropdown>
+                </Menu>
+              </Table.Td>
+
+            </Table.Tr>
+          ))}
+        </Table.Tbody>
+      </Table>
+
+      {users.length === 0 && <Text c="var(--naja-text)">No users found.</Text>}
+    </Stack>
   );
 };
 

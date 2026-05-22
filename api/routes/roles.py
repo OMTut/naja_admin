@@ -8,6 +8,8 @@ from typing import Optional, List
 from datetime import datetime
 from database.connection import get_db
 from database.models.role import Role
+from database.operations.users_roles import remove_role_from_all_users
+from dependencies.auth import require_session
 
 router = APIRouter()
 
@@ -41,14 +43,14 @@ class RoleResponse(BaseModel):
 
 # Role administration endpoints
 @router.get("/", response_model=List[RoleResponse])
-async def get_all_roles(db: Session = Depends(get_db)):
+async def get_all_roles(db: Session = Depends(get_db), _=Depends(require_session)):
     """Get all roles"""
     roles = db.query(Role).all()
     return roles
 
 
 @router.get("/{role_id}", response_model=RoleResponse)
-async def get_role(role_id: int, db: Session = Depends(get_db)):
+async def get_role(role_id: int, db: Session = Depends(get_db), _=Depends(require_session)):
     """Get a specific role by ID"""
     role = db.query(Role).filter(Role.role_id == role_id).first()
     if not role:
@@ -57,7 +59,7 @@ async def get_role(role_id: int, db: Session = Depends(get_db)):
 
 
 @router.post("/", response_model=RoleResponse, status_code=201)
-async def create_role(role_data: RoleCreate, db: Session = Depends(get_db)):
+async def create_role(role_data: RoleCreate, db: Session = Depends(get_db), _=Depends(require_session)):
     """Create a new role"""
     # Check if discord_id or name already exists
     existing = db.query(Role).filter(
@@ -85,7 +87,7 @@ async def create_role(role_data: RoleCreate, db: Session = Depends(get_db)):
 
 
 @router.patch("/{role_id}", response_model=RoleResponse)
-async def update_role(role_id: int, role_data: RoleUpdate, db: Session = Depends(get_db)):
+async def update_role(role_id: int, role_data: RoleUpdate, db: Session = Depends(get_db), _=Depends(require_session)):
     """Update an existing role"""
     role = db.query(Role).filter(Role.role_id == role_id).first()
     if not role:
@@ -113,12 +115,13 @@ async def update_role(role_id: int, role_data: RoleUpdate, db: Session = Depends
 
 
 @router.delete("/{role_id}")
-async def delete_role(role_id: int, db: Session = Depends(get_db)):
+async def delete_role(role_id: int, db: Session = Depends(get_db), _=Depends(require_session)):
     """Delete a role"""
     role = db.query(Role).filter(Role.role_id == role_id).first()
     if not role:
         raise HTTPException(status_code=404, detail="Role not found")
     
+    remove_role_from_all_users(role_id)
     db.delete(role)
     db.commit()
     return {"success": True, "message": f"Role {role_id} deleted successfully"}

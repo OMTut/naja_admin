@@ -1,3 +1,8 @@
+export interface UserRole {
+  role_name: string;
+  grants_access: boolean;
+}
+
 export interface User {
   id: number;
   discord_id: string;
@@ -5,6 +10,7 @@ export interface User {
   server_nickname: string | null;
   email: string | null;
   status: 'pending' | 'approved' | 'rejected' | 'banned';
+  roles: UserRole[];
   created_at: string;
   updated_at: string;
   last_login_at: string;

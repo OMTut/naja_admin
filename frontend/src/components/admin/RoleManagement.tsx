@@ -1,15 +1,22 @@
 import { useState, useEffect } from 'react';
+import {
+  Table, Modal, TextInput, Checkbox, Button, Menu,
+  Group, Text, Stack,
+} from '@mantine/core';
+import { IconEdit, IconTrash } from '@tabler/icons-react';
+import { useDisclosure } from '@mantine/hooks';
 import type { Role, RoleCreate, RoleUpdate } from '../../types/role';
 import { roleService } from '../../services/admin/roleService';
+import { inputStyles, modalStyles, tableStyles, menuStyles } from '../../styles/mantine';
 
 const RoleManagement = () => {
   const [roles, setRoles] = useState<Role[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [isCreating, setIsCreating] = useState(false);
   const [editingRole, setEditingRole] = useState<Role | null>(null);
+  const [, setIsCreating] = useState(false);
+  const [opened, { open, close }] = useDisclosure(false);
 
-  // Form state
   const [formData, setFormData] = useState<RoleCreate>({
     role_discord_id: '',
     role_name: '',
@@ -17,10 +24,7 @@ const RoleManagement = () => {
     grants_access: false,
   });
 
-  // Load roles on mount
-  useEffect(() => {
-    loadRoles();
-  }, []);
+  useEffect(() => { loadRoles(); }, []);
 
   const loadRoles = async () => {
     try {
@@ -28,9 +32,8 @@ const RoleManagement = () => {
       const data = await roleService.getAllRoles();
       setRoles(data);
       setError(null);
-    } catch (err) {
+    } catch {
       setError('Failed to load roles');
-      console.error(err);
     } finally {
       setLoading(false);
     }
@@ -40,8 +43,7 @@ const RoleManagement = () => {
     e.preventDefault();
     try {
       await roleService.createRole(formData);
-      setIsCreating(false);
-      resetForm();
+      cancelForm();
       loadRoles();
     } catch (err: any) {
       setError(err.message || 'Failed to create role');
@@ -51,7 +53,6 @@ const RoleManagement = () => {
   const handleUpdate = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!editingRole) return;
-
     try {
       const updateData: RoleUpdate = {
         role_name: formData.role_name,
@@ -59,8 +60,7 @@ const RoleManagement = () => {
         grants_access: formData.grants_access,
       };
       await roleService.updateRole(editingRole.role_id, updateData);
-      setEditingRole(null);
-      resetForm();
+      cancelForm();
       loadRoles();
     } catch (err: any) {
       setError(err.message || 'Failed to update role');
@@ -69,7 +69,6 @@ const RoleManagement = () => {
 
   const handleDelete = async (roleId: number) => {
     if (!confirm('Are you sure you want to delete this role?')) return;
-
     try {
       await roleService.deleteRole(roleId);
       loadRoles();
@@ -80,157 +79,139 @@ const RoleManagement = () => {
 
   const startEdit = (role: Role) => {
     setEditingRole(role);
+    setIsCreating(false);
     setFormData({
       role_discord_id: role.role_discord_id,
       role_name: role.role_name,
       role_description: role.role_description || '',
       grants_access: role.grants_access,
     });
-    setIsCreating(false);
+    open();
   };
 
   const startCreate = () => {
     setIsCreating(true);
     setEditingRole(null);
     resetForm();
+    open();
   };
 
   const cancelForm = () => {
+    close();
     setIsCreating(false);
     setEditingRole(null);
     resetForm();
   };
 
   const resetForm = () => {
-    setFormData({
-      role_discord_id: '',
-      role_name: '',
-      role_description: '',
-      grants_access: false,
-    });
+    setFormData({ role_discord_id: '', role_name: '', role_description: '', grants_access: false });
   };
 
-  if (loading) return <div>Loading roles...</div>;
+  if (loading) return <Text c="#CCAC31">Loading roles...</Text>;
 
   return (
-    <div style={{ padding: '20px' }}>
-      <h2>Role Management</h2>
+    <Stack gap="md">
+      <Group justify="space-between" align="center">
+        <h1 style={{ margin: 0 }}>Role Management</h1>
+        <Button color="najaGold" onClick={startCreate}>+ Create Role</Button>
+      </Group>
 
-      {error && (
-        <div style={{ color: 'red', marginBottom: '10px' }}>
-          {error}
-        </div>
-      )}
+      {error && <Text c="red">{error}</Text>}
 
-      {!isCreating && !editingRole && (
-        <button onClick={startCreate} style={{ marginBottom: '20px' }}>
-          Create New Role
-        </button>
-      )}
-
-      {/* Create/Edit Form */}
-      {(isCreating || editingRole) && (
-        <form onSubmit={editingRole ? handleUpdate : handleCreate} style={{ marginBottom: '30px', border: '1px solid #ccc', padding: '15px' }}>
-          <h3>{editingRole ? 'Edit Role' : 'Create New Role'}</h3>
-          
-          <div style={{ marginBottom: '10px' }}>
-            <label>
-              Discord Role ID:
-              <input
-                type="text"
-                value={formData.role_discord_id}
-                onChange={(e) => setFormData({ ...formData, role_discord_id: e.target.value })}
-                required
-                disabled={!!editingRole}
-                style={{ marginLeft: '10px', width: '200px' }}
-              />
-            </label>
-          </div>
-
-          <div style={{ marginBottom: '10px' }}>
-            <label>
-              Role Name:
-              <input
-                type="text"
-                value={formData.role_name}
-                onChange={(e) => setFormData({ ...formData, role_name: e.target.value })}
-                required
-                style={{ marginLeft: '10px', width: '200px' }}
-              />
-            </label>
-          </div>
-
-          <div style={{ marginBottom: '10px' }}>
-            <label>
-              Description:
-              <input
-                type="text"
-                value={formData.role_description}
-                onChange={(e) => setFormData({ ...formData, role_description: e.target.value })}
-                style={{ marginLeft: '10px', width: '300px' }}
-              />
-            </label>
-          </div>
-
-          <div style={{ marginBottom: '10px' }}>
-            <label>
-              <input
-                type="checkbox"
-                checked={formData.grants_access}
-                onChange={(e) => setFormData({ ...formData, grants_access: e.target.checked })}
-              />
-              Grants Access
-            </label>
-          </div>
-
-          <div>
-            <button type="submit" style={{ marginRight: '10px' }}>
-              {editingRole ? 'Update' : 'Create'}
-            </button>
-            <button type="button" onClick={cancelForm}>
-              Cancel
-            </button>
-          </div>
+      <Modal
+        opened={opened}
+        onClose={cancelForm}
+        title={<Text c="#CCAC31" fw={700}>{editingRole ? 'Edit Role' : 'Create New Role'}</Text>}
+        styles={modalStyles}
+      >
+        <form onSubmit={editingRole ? handleUpdate : handleCreate}>
+          <Stack gap="sm">
+            <TextInput
+              label="Discord Role ID"
+              value={formData.role_discord_id}
+              onChange={(e) => setFormData({ ...formData, role_discord_id: e.target.value })}
+              required
+              disabled={!!editingRole}
+              styles={inputStyles}
+            />
+            <TextInput
+              label="Role Name"
+              value={formData.role_name}
+              onChange={(e) => setFormData({ ...formData, role_name: e.target.value })}
+              required
+              styles={inputStyles}
+            />
+            <TextInput
+              label="Description"
+              value={formData.role_description}
+              onChange={(e) => setFormData({ ...formData, role_description: e.target.value })}
+              styles={inputStyles}
+            />
+            <Checkbox
+              label="Grants Access"
+              checked={formData.grants_access}
+              onChange={(e) => setFormData({ ...formData, grants_access: e.currentTarget.checked })}
+              color="najaGold"
+              styles={{ label: { color: '#DDD3BA', fontFamily: "'Vollkorn', Georgia, serif" } }}
+            />
+            <Group justify="flex-end" mt="md">
+              <Button variant="outline" color="gray" onClick={cancelForm}>Cancel</Button>
+              <Button type="submit" color="najaGold">{editingRole ? 'Update' : 'Create'}</Button>
+            </Group>
+          </Stack>
         </form>
-      )}
+      </Modal>
 
-      {/* Roles Table */}
-      <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-        <thead>
-          <tr style={{ borderBottom: '2px solid #000' }}>
-            <th style={{ padding: '10px', textAlign: 'left' }}>ID</th>
-            <th style={{ padding: '10px', textAlign: 'left' }}>Discord ID</th>
-            <th style={{ padding: '10px', textAlign: 'left' }}>Name</th>
-            <th style={{ padding: '10px', textAlign: 'left' }}>Description</th>
-            <th style={{ padding: '10px', textAlign: 'left' }}>Grants Access</th>
-            <th style={{ padding: '10px', textAlign: 'left' }}>Actions</th>
-          </tr>
-        </thead>
-        <tbody>
+      <Table striped highlightOnHover styles={tableStyles}>
+        <Table.Thead>
+          <Table.Tr>
+            <Table.Th>ID</Table.Th>
+            <Table.Th>Discord ID</Table.Th>
+            <Table.Th>Name</Table.Th>
+            <Table.Th>Description</Table.Th>
+            <Table.Th>Grants Access</Table.Th>
+            <Table.Th>Actions</Table.Th>
+          </Table.Tr>
+        </Table.Thead>
+        <Table.Tbody>
           {roles.map((role) => (
-            <tr key={role.role_id} style={{ borderBottom: '1px solid #ccc' }}>
-              <td style={{ padding: '10px' }}>{role.role_id}</td>
-              <td style={{ padding: '10px' }}>{role.role_discord_id}</td>
-              <td style={{ padding: '10px' }}>{role.role_name}</td>
-              <td style={{ padding: '10px' }}>{role.role_description || '-'}</td>
-              <td style={{ padding: '10px' }}>{role.grants_access ? '✓' : '✗'}</td>
-              <td style={{ padding: '10px' }}>
-                <button onClick={() => startEdit(role)} style={{ marginRight: '5px' }}>
-                  Edit
-                </button>
-                <button onClick={() => handleDelete(role.role_id)}>
-                  Delete
-                </button>
-              </td>
-            </tr>
+            <Table.Tr key={role.role_id}>
+              <Table.Td>{role.role_id}</Table.Td>
+              <Table.Td>{role.role_discord_id}</Table.Td>
+              <Table.Td>{role.role_name}</Table.Td>
+              <Table.Td>{role.role_description || '—'}</Table.Td>
+              <Table.Td>
+                <Text size="sm" c={role.grants_access ? 'var(--naja-gold)' : 'dimmed'}>
+                  {role.grants_access ? 'Yes' : 'No'}
+                </Text>
+              </Table.Td>
+              <Table.Td>
+                <Menu position="bottom-end" withArrow arrowSize={8} styles={menuStyles}>
+                  <Menu.Target>
+                    <Button variant="subtle" color="gray" size="xs" px={16}>...</Button>
+                  </Menu.Target>
+                  <Menu.Dropdown>
+                    <Menu.Item leftSection={<IconEdit size={14} stroke={1.5} />} onClick={() => startEdit(role)}>
+                      Edit
+                    </Menu.Item>
+                    <Menu.Divider style={{ borderColor: 'rgba(204, 172, 49, 0.2)' }} />
+                    <Menu.Item
+                      leftSection={<IconTrash size={14} stroke={1.5} />}
+                      onClick={() => handleDelete(role.role_id)}
+                      styles={{ item: { ...menuStyles.item, color: '#ff6b6b' } }}
+                    >
+                      Delete
+                    </Menu.Item>
+                  </Menu.Dropdown>
+                </Menu>
+              </Table.Td>
+            </Table.Tr>
           ))}
-        </tbody>
-      </table>
+        </Table.Tbody>
+      </Table>
 
-      {roles.length === 0 && (
-        <p style={{ marginTop: '20px' }}>No roles found. Create one to get started.</p>
-      )}
-    </div>
+      {roles.length === 0 && <Text c="#DDD3BA">No roles found. Create one to get started.</Text>}
+    </Stack>
   );
 };
 

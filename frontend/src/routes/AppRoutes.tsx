@@ -5,6 +5,7 @@ import HomePageAdmin from "../pages/Admin/HomePageAdmin";
 import RolesPage from "../pages/Admin/RolesPage";
 import UsersPage from "../pages/Admin/UsersPage";
 import LoginPage from "../pages/LoginPage";
+import ProfilePage from "../pages/ProfilePage";
 import ProtectedRoute from "../components/auth/ProtectedRoute";
 import PublicRoute from "../components/auth/PublicRoute";
 import Layout from "../components/layout/Layout";
@@ -53,7 +54,17 @@ const AppRoutes = () => (
                     </ProtectedRoute>
                 } 
             />
-            <Route 
+            <Route
+                path="/profile"
+                element={
+                    <ProtectedRoute>
+                        <Layout>
+                            <ProfilePage />
+                        </Layout>
+                    </ProtectedRoute>
+                }
+            />
+            <Route
                 path="/login"
                 element={
                     <PublicRoute>
