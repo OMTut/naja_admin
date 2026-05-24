@@ -18,8 +18,9 @@ class User(Base):
     
     id = Column(Integer, primary_key=True, autoincrement=True)  # SERIAL PRIMARY KEY
     discord_id = Column(String(20), unique=True, nullable=False, index=True)  # VARCHAR(20) UNIQUE NOT NULL
-    discord_username = Column(String(32), nullable=False)  # VARCHAR(32) NOT NULL
-    server_nickname = Column(String(32), nullable=True)  # VARCHAR(32) - Server nickname
+    discord_username = Column(String(32), nullable=False)  # VARCHAR(32) NOT NULL - account username
+    global_name = Column(String(32), nullable=True)  # VARCHAR(32) - Discord display name
+    server_nickname = Column(String(32), nullable=True)  # VARCHAR(32) - per-server nickname
     email = Column(String(255))  # VARCHAR(255)
     status = Column(
         Enum(UserStatus), 

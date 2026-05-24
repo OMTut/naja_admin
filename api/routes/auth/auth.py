@@ -16,10 +16,9 @@ from database.operations.session_operations import get_user_from_session
 from database.operations.session_operations import invalidate_all_user_sessions
 from database.operations.session_operations import delete_all_user_sessions
 from database.models.user import UserStatus
-from services.sync_user_roles import get_user_current_roles
+from services.sync_user_roles import get_user_current_roles, sync_user_roles_preserving_app
 from services.role_access import check_user_has_access_role
-from services.sync_user_roles import sync_user_roles
-from services.discord_api import get_user_roles_from_discord_api
+from services.discord_api import get_user_roles_from_discord_api, get_all_guild_role_ids
 
 router = APIRouter()
 
@@ -61,9 +60,10 @@ async def get_current_user(request: Request):
     live_discord_roles = await get_user_roles_from_discord_api(user.discord_id)
     has_access = check_user_has_access_role(live_discord_roles)
 
-    # sync if roles have changed
+    # sync if roles have changed, preserving app-only roles
     if set(db_user_discord_roles) != set(live_discord_roles):
-        sync_user_roles(user.id, live_discord_roles)
+        all_guild_role_ids = await get_all_guild_role_ids()
+        sync_user_roles_preserving_app(user.id, live_discord_roles, all_guild_role_ids)
     
     if not has_access:
         print(f"Session Check: Access - Role denied.")
@@ -83,8 +83,9 @@ async def get_current_user(request: Request):
         "user": {
             "id": user.id,
             "discord_username": user.discord_username,
-            "server_nickname": user.server_nickname,  # Include server nickname
-            "status": user.status.value  # UserStatus is an enum, so we need .value
+            "server_nickname": user.server_nickname,
+            "status": user.status.value,
+            "roles": [r["name"] for r in db_user_roles],
         }
     }
 

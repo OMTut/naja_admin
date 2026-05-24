@@ -9,7 +9,7 @@ export interface Role {
 }
 
 export interface RoleCreate {
-  role_discord_id: string;
+  role_discord_id?: string;
   role_name: string;
   role_description?: string;
   grants_access?: boolean;

@@ -100,6 +100,22 @@ class UserService {
   }
 
   /**
+   * Re-sync a user's Discord roles from the guild
+   */
+  async resyncUser(userId: number): Promise<{ roles: import('../../types/user').UserRole[]; discord_username: string; global_name: string | null; server_nickname: string | null }> {
+    const response = await fetch(`${this.baseUrl}/${userId}/resync`, {
+      method: 'POST',
+      credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
+    });
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.detail || `HTTP error! status: ${response.status}`);
+    }
+    return await response.json();
+  }
+
+  /**
    * Delete a user
    */
   async deleteUser(userId: number): Promise<{ success: boolean; message: string }> {

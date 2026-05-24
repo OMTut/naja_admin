@@ -6,6 +6,7 @@ export interface SessionResponse {
     discord_username: string;
     discord_avatar: string;
     status: string;
+    roles: string[];
   };
 }
 

@@ -5,7 +5,8 @@ import {
   Modal, MultiSelect,
 } from '@mantine/core';
 import { useDisclosure } from '@mantine/hooks';
-import { IconShield, IconTrash } from '@tabler/icons-react';
+import { useNavigate } from 'react-router-dom';
+import { IconUser, IconTrash } from '@tabler/icons-react';
 import type { User, UserRole } from '../../types/user';
 import type { Role } from '../../types/role';
 import { userService } from '../../services/admin/userService';
@@ -37,6 +38,8 @@ const UserManagement = () => {
   const [allRoles, setAllRoles] = useState<Role[]>([]);
   const [loading, setLoading]   = useState(true);
   const [error, setError]       = useState<string | null>(null);
+
+  const navigate = useNavigate();
 
   const [editingUser, setEditingUser]         = useState<User | null>(null);
   const [selectedRoleIds, setSelectedRoleIds] = useState<string[]>([]);
@@ -158,10 +161,9 @@ const UserManagement = () => {
               <Table.Td style={{ width: 330 }}>
                 <Group gap="sm">
                   <Stack gap={2}>
-                    <Text size="sm" fw={600} c="var(--naja-text)">{user.discord_username}</Text>
-                    {user.server_nickname && (
-                      <Text size="xs" c="var(--naja-teal)">{user.server_nickname}</Text>
-                    )}
+                    <Text size="sm" fw={600} c="var(--naja-text)">
+                      {user.server_nickname || user.global_name || user.discord_username}
+                    </Text>
                   </Stack>
                 </Group>
               </Table.Td>
@@ -186,7 +188,12 @@ const UserManagement = () => {
               </Table.Td>
 
               <Table.Td visibleFrom="sm">
-                <Text size="sm" c="var(--naja-text)">
+                <Text
+                  size="sm"
+                  c="var(--naja-text)"
+                  style={{ cursor: 'pointer' }}
+                  onClick={() => openEditRoles(user)}
+                >
                   {user.roles.length > 0
                     ? user.roles.map((r) => r.role_name).join(', ')
                     : <Text size="xs" c="dimmed">—</Text>
@@ -203,10 +210,10 @@ const UserManagement = () => {
                   </Menu.Target>
                   <Menu.Dropdown>
                     <Menu.Item
-                      leftSection={<IconShield size={14} stroke={1.5} />}
-                      onClick={() => openEditRoles(user)}
+                      leftSection={<IconUser size={14} stroke={1.5} />}
+                      onClick={() => navigate(`/admin/users/${user.id}`)}
                     >
-                      Edit Roles
+                      View Profile
                     </Menu.Item>
                     <Menu.Divider style={{ borderColor: 'rgba(204, 172, 49, 0.2)' }} />
                     <Menu.Item

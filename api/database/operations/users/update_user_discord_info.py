@@ -13,6 +13,7 @@ def update_user_discord_info(user_id: int, discord_data: Dict[str, Any]) -> bool
                 return False
 
             user.discord_username = discord_data.get('username')
+            user.global_name = discord_data.get('global_name')
             user.email = discord_data.get('email')
             user.server_nickname = discord_data.get('server_nickname')
 

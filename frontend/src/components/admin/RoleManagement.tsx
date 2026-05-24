@@ -18,7 +18,7 @@ const RoleManagement = () => {
   const [opened, { open, close }] = useDisclosure(false);
 
   const [formData, setFormData] = useState<RoleCreate>({
-    role_discord_id: '',
+    role_discord_id: undefined,
     role_name: '',
     role_description: '',
     grants_access: false,
@@ -104,7 +104,7 @@ const RoleManagement = () => {
   };
 
   const resetForm = () => {
-    setFormData({ role_discord_id: '', role_name: '', role_description: '', grants_access: false });
+    setFormData({ role_discord_id: undefined, role_name: '', role_description: '', grants_access: false });
   };
 
   if (loading) return <Text c="#CCAC31">Loading roles...</Text>;
@@ -128,9 +128,9 @@ const RoleManagement = () => {
           <Stack gap="sm">
             <TextInput
               label="Discord Role ID"
+              description="Required for Discord roles. Leave blank for app-only roles."
               value={formData.role_discord_id}
               onChange={(e) => setFormData({ ...formData, role_discord_id: e.target.value })}
-              required
               disabled={!!editingRole}
               styles={inputStyles}
             />

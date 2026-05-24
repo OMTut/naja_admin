@@ -18,6 +18,7 @@ from database.models.user import UserStatus
 from .session import get_session, is_session_expired, update_session_access
 from services.role_access import check_user_has_access_role, get_user_access_roles
 from services.sync_user_roles import sync_user_roles, sync_user_roles_preserving_app
+from services.discord_api import get_all_guild_role_ids as _get_all_guild_role_ids_shared
 
 router = APIRouter()
 
@@ -148,25 +149,6 @@ async def check_user_guild_roles(access_token: str, guild_id: str, required_role
         "member_data": member_data
     }
 
-async def _get_all_guild_role_ids() -> list[str]:
-    """Fetch all assignable role IDs from the guild via Gibbs."""
-    gibbs_url = os.getenv("GIBBS_API_URL")
-    api_key = os.getenv("BOT_API_KEY")
-    if not gibbs_url or not api_key:
-        return []
-    try:
-        async with httpx.AsyncClient() as client:
-            response = await client.get(
-                f"{gibbs_url}/api/roles",
-                headers={"X-API-Key": api_key},
-                timeout=5.0,
-            )
-        if response.is_success:
-            return [str(r["id"]) for r in response.json()]
-    except Exception as e:
-        print(f"Failed to fetch guild roles from Gibbs: {e}")
-    return []
-
 
 # Testing version
 @router.get("/discord/callback")
@@ -250,7 +232,7 @@ async def discord_callback(code: str = None, error: str = None):
             print(f"Access granted - user has required roles")
             
             # If user is approved: sync user_role table, preserving app-only roles
-            all_guild_role_ids = await _get_all_guild_role_ids()
+            all_guild_role_ids = await _get_all_guild_role_ids_shared()
             if all_guild_role_ids:
                 sync_user_roles_preserving_app(existing_user.id, user_discord_roles, all_guild_role_ids)
             else:

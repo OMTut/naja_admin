@@ -6,6 +6,7 @@ from sqlalchemy.orm import Session
 from pydantic import BaseModel
 from typing import Optional, List
 from datetime import datetime
+import uuid
 from database.connection import get_db
 from database.models.role import Role
 from database.operations.users_roles import remove_role_from_all_users
@@ -16,7 +17,7 @@ router = APIRouter()
 
 # Pydantic models for request/response
 class RoleCreate(BaseModel):
-    role_discord_id: str
+    role_discord_id: Optional[str] = None
     role_name: str
     role_description: Optional[str] = None
     grants_access: bool = False
@@ -74,7 +75,7 @@ async def create_role(role_data: RoleCreate, db: Session = Depends(get_db), _=De
         )
     
     new_role = Role(
-        role_discord_id=role_data.role_discord_id,
+        role_discord_id=role_data.role_discord_id or f"app-{uuid.uuid4().hex[:16]}",
         role_name=role_data.role_name,
         role_description=role_data.role_description,
         grants_access=role_data.grants_access

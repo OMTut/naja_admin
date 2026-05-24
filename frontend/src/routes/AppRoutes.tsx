@@ -65,6 +65,16 @@ const AppRoutes = () => (
                 }
             />
             <Route
+                path="/admin/users/:userId"
+                element={
+                    <ProtectedRoute>
+                        <Layout>
+                            <ProfilePage />
+                        </Layout>
+                    </ProtectedRoute>
+                }
+            />
+            <Route
                 path="/login"
                 element={
                     <PublicRoute>

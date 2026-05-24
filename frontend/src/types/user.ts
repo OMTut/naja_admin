@@ -7,6 +7,7 @@ export interface User {
   id: number;
   discord_id: string;
   discord_username: string;
+  global_name: string | null;
   server_nickname: string | null;
   email: string | null;
   status: 'pending' | 'approved' | 'rejected' | 'banned';

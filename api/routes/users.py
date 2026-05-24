@@ -11,6 +11,8 @@ from datetime import datetime
 from database.connection import get_db
 from database.models.user import User, UserStatus
 from database.operations.users_roles import get_user_roles, clear_user_roles, add_user_role
+from services.sync_user_roles import sync_user_roles_preserving_app
+from services.discord_api import get_member_profile, get_all_guild_role_ids
 from database.models.role import Role as RoleModel
 from dependencies.auth import require_session
 
@@ -34,6 +36,7 @@ class UserResponse(BaseModel):
     id: int
     discord_id: str
     discord_username: str
+    global_name: Optional[str]
     server_nickname: Optional[str]
     email: Optional[str]
     status: str
@@ -59,6 +62,7 @@ async def get_all_users(db: Session = Depends(get_db), _=Depends(require_session
             "id": user.id,
             "discord_id": user.discord_id,
             "discord_username": user.discord_username,
+            "global_name": user.global_name,
             "server_nickname": user.server_nickname,
             "email": user.email,
             "status": user.status.value,
@@ -83,6 +87,7 @@ async def get_user(user_id: int, db: Session = Depends(get_db), _=Depends(requir
         "id": user.id,
         "discord_id": user.discord_id,
         "discord_username": user.discord_username,
+        "global_name": user.global_name,
         "server_nickname": user.server_nickname,
         "email": user.email,
         "status": user.status.value,
@@ -126,6 +131,7 @@ async def update_user(user_id: int, user_data: UserUpdate, db: Session = Depends
         "id": user.id,
         "discord_id": user.discord_id,
         "discord_username": user.discord_username,
+        "global_name": user.global_name,
         "server_nickname": user.server_nickname,
         "email": user.email,
         "status": user.status.value,
@@ -213,6 +219,56 @@ async def _push_roles_to_discord(
         return applied + not_in_discord, warning
     except Exception as e:
         return None, f"Gibbs: {e}"
+
+
+@router.post("/{user_id}/resync")
+async def resync_user(user_id: int, db: Session = Depends(get_db), _=Depends(require_session)):
+    """Re-sync a user's Discord profile and roles from Discord via Gibbs."""
+    user = db.query(User).filter(User.id == user_id).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    gibbs_url = os.getenv("GIBBS_API_URL")
+    api_key = os.getenv("BOT_API_KEY")
+    if not gibbs_url or not api_key:
+        raise HTTPException(status_code=503, detail="Gibbs is not configured")
+
+    # Fetch profile info and roles concurrently
+    import asyncio
+    profile_task = asyncio.create_task(get_member_profile(user.discord_id))
+    guild_role_task = asyncio.create_task(get_all_guild_role_ids())
+
+    headers = {"X-API-Key": api_key}
+    async with httpx.AsyncClient() as client:
+        member_resp = await client.get(
+            f"{gibbs_url}/api/members/{user.discord_id}/roles",
+            headers=headers,
+            timeout=10.0,
+        )
+        if not member_resp.is_success:
+            raise HTTPException(status_code=502, detail="Failed to fetch member roles from Discord")
+        role_discord_ids = member_resp.json().get("role_discord_ids", [])
+
+    profile, all_guild_role_ids = await asyncio.gather(profile_task, guild_role_task)
+
+    # Update profile fields (email excluded — only refreshed on OAuth login)
+    if profile:
+        if profile.get("username"):
+            user.discord_username = profile["username"]
+        user.global_name = profile.get("global_name")
+        user.server_nickname = profile.get("server_nickname")
+        db.commit()
+        db.refresh(user)
+
+    sync_user_roles_preserving_app(user_id, role_discord_ids, all_guild_role_ids)
+
+    roles = get_user_roles(user_id)
+    return {
+        "discord_username": user.discord_username,
+        "global_name": user.global_name,
+        "server_nickname": user.server_nickname,
+        "roles": [{"role_name": r["role_name"], "grants_access": r["grants_access"]} for r in roles],
+    }
 
 
 @router.delete("/{user_id}")

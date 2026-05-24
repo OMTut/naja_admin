@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
-import { Stack, Group, Text, TextInput, Avatar, Paper, Badge, Divider } from '@mantine/core';
-import { IconBrandDiscord } from '@tabler/icons-react';
+import { Stack, Group, Text, TextInput, Avatar, Paper, Badge, Divider, Button } from '@mantine/core';
+import { IconBrandDiscord, IconRefresh } from '@tabler/icons-react';
+import { useParams } from 'react-router-dom';
 import { useAuth } from '../hooks';
 import { userService } from '../services/admin/userService';
 import type { User } from '../types/user';
@@ -15,22 +16,40 @@ const STATUS_COLORS: Record<string, string> = {
 };
 
 const ProfilePage = () => {
+  const { userId } = useParams<{ userId?: string }>();
   const { user: sessionUser } = useAuth();
   const [profile, setProfile] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  const resolvedId = userId ? Number(userId) : sessionUser?.id;
+  const isAppAdmin = sessionUser?.roles?.includes('App Admin') ?? false;
+  const [resyncing, setResyncing] = useState(false);
+
   useEffect(() => {
-    if (!sessionUser?.id) return;
-    userService.getUser(sessionUser.id)
+    if (!resolvedId) return;
+    userService.getUser(resolvedId)
       .then(setProfile)
       .catch(() => setError('Failed to load profile.'))
       .finally(() => setLoading(false));
-  }, [sessionUser?.id]);
+  }, [resolvedId]);
 
-  const initials = profile?.discord_username
-    ? profile.discord_username.slice(0, 2).toUpperCase()
-    : '?';
+  const handleResync = async () => {
+    if (!resolvedId) return;
+    setResyncing(true);
+    setError(null);
+    try {
+      const { roles, discord_username, global_name, server_nickname } = await userService.resyncUser(resolvedId);
+      setProfile((prev) => prev ? { ...prev, roles, discord_username, global_name, server_nickname } : prev);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Resync failed.');
+    } finally {
+      setResyncing(false);
+    }
+  };
+
+  const displayName = profile?.global_name || profile?.discord_username;
+  const initials = displayName ? displayName.slice(0, 2).toUpperCase() : '?';
 
   const joinedDate = profile?.created_at
     ? new Date(profile.created_at).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })
@@ -40,7 +59,21 @@ const ProfilePage = () => {
 
   return (
     <Stack gap="xl" maw={640}>
-      <h1 style={{ margin: 0 }}>Profile</h1>
+      <Group justify="space-between" align="center">
+        <h1 style={{ margin: 0 }}>Profile</h1>
+        {isAppAdmin && (
+          <Button
+            variant="outline"
+            color="najaGold"
+            size="xs"
+            leftSection={<IconRefresh size={14} />}
+            loading={resyncing}
+            onClick={handleResync}
+          >
+            Resync
+          </Button>
+        )}
+      </Group>
 
       <Paper p="lg" className="profile-card">
         <Group gap="lg" align="flex-start">
@@ -50,7 +83,7 @@ const ProfilePage = () => {
 
           <Stack gap={6} style={{ flex: 1 }}>
             <Group gap="sm" align="center">
-              <Text size="xl" fw={700} className="profile-username">{profile?.discord_username}</Text>
+              <Text size="xl" fw={700} className="profile-username">{profile?.global_name || profile?.discord_username}</Text>
               <Badge color={STATUS_COLORS[profile?.status || ''] || 'gray'} variant="filled" size="sm">
                 {profile?.status?.toUpperCase()}
               </Badge>
@@ -76,8 +109,9 @@ const ProfilePage = () => {
 
         <div className="profile-fields-grid">
           <div className="profile-fields-left">
-            <TextInput label="Discord Username" value={profile?.discord_username || ''}   disabled styles={inputStyles} />
-            <TextInput label="Server Nickname"  value={profile?.server_nickname  || '—'} disabled styles={inputStyles} />
+            <TextInput label="Username"        value={profile?.discord_username || ''}   disabled styles={inputStyles} />
+            <TextInput label="Display Name"    value={profile?.global_name      || '—'}  disabled styles={inputStyles} />
+            <TextInput label="Server Nickname" value={profile?.server_nickname  || '—'}  disabled styles={inputStyles} />
           </div>
           <div className="profile-fields-right">
             <TextInput label="Email" value={profile?.email || '—'} disabled styles={inputStyles} />
