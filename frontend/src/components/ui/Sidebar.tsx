@@ -6,6 +6,7 @@ import {
   IconKey,
 } from '@tabler/icons-react';
 import { useNavigate, useLocation } from 'react-router-dom';
+import { useState, useEffect } from 'react';
 
 interface SidebarProps {
   onNavigate?: () => void;
@@ -75,9 +76,27 @@ const NavIcon = ({ item, active, onClick }: NavIconProps) => (
   </Tooltip>
 );
 
+const GIBBS_HEALTH_URL = import.meta.env.VITE_GIBBS_HEALTH_URL as string;
+const POLL_INTERVAL_MS = Number(import.meta.env.VITE_GIBBS_POLL_INTERVAL_MS) || 30000;
+
 const Sidebar = ({ onNavigate }: SidebarProps) => {
   const navigate = useNavigate();
   const location = useLocation();
+  const [gibbsOnline, setGibbsOnline] = useState<boolean | null>(null);
+
+  useEffect(() => {
+    const check = async () => {
+      try {
+        const res = await fetch(GIBBS_HEALTH_URL, { credentials: 'include', signal: AbortSignal.timeout(5000) });
+        setGibbsOnline(res.ok);
+      } catch {
+        setGibbsOnline(false);
+      }
+    };
+    check();
+    const id = setInterval(check, POLL_INTERVAL_MS);
+    return () => clearInterval(id);
+  }, []);
 
   const isActive = (path: string) =>
     path === '/' ? location.pathname === '/' : location.pathname.startsWith(path);
@@ -101,13 +120,20 @@ const Sidebar = ({ onNavigate }: SidebarProps) => {
       </Stack>
 
       <Box pb="md">
-        <Tooltip label="Connected" position="right" withArrow
+        <Tooltip
+          label={gibbsOnline === null ? 'Gibbs: Checking...' : gibbsOnline ? 'Gibbs: Online' : 'Gibbs: Offline'}
+          position="right"
+          withArrow
           styles={{
             tooltip: { backgroundColor: '#0A1B1F', color: '#CCAC31', border: '1px solid rgba(204, 172, 49, 0.3)', fontFamily: "'Vollkorn', serif" },
           }}
         >
           <Text size="xs" style={{ color: '#265D73', cursor: 'default' }}>
-            <span style={{ animation: 'pulse 2s infinite', display: 'inline-block', color: '#CCAC31' }}>●</span>
+            <span style={{
+              animation: gibbsOnline ? 'pulse 2s infinite' : undefined,
+              display: 'inline-block',
+              color: gibbsOnline === null ? '#265D73' : gibbsOnline ? '#CCAC31' : '#C0392B',
+            }}>●</span>
           </Text>
         </Tooltip>
       </Box>
