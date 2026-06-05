@@ -10,9 +10,11 @@ import uuid
 from database.connection import get_db
 from database.models.role import Role
 from database.operations.users_roles import remove_role_from_all_users
-from dependencies.auth import require_session
+from dependencies.auth import require_session, require_roles
 
-router = APIRouter()
+ADMIN_ROLES = ("Role 1", "App Admin")
+
+router = APIRouter(dependencies=[Depends(require_roles(*ADMIN_ROLES))])
 
 
 # Pydantic models for request/response

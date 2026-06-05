@@ -5,9 +5,11 @@ import os
 import httpx
 from fastapi import APIRouter, HTTPException, Depends
 from services.background_tasks import manual_cleanup, get_background_tasks_status
-from dependencies.auth import require_session
+from dependencies.auth import require_session, require_roles
 
-router = APIRouter()
+ADMIN_ROLES = ("Role 1", "App Admin")
+
+router = APIRouter(dependencies=[Depends(require_roles(*ADMIN_ROLES))])
 
 GIBBS_API_URL = os.getenv("GIBBS_API_URL", "http://localhost:8001")
 

@@ -4,9 +4,11 @@ import {
   IconLayoutDashboard,
   IconUsers,
   IconKey,
+  IconBooks,
 } from '@tabler/icons-react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useState, useEffect } from 'react';
+import { useAuth } from '../../hooks';
 
 interface SidebarProps {
   onNavigate?: () => void;
@@ -16,13 +18,16 @@ interface NavItem {
   path: string;
   label: string;
   icon: React.FC<{ size?: number; stroke?: number }>;
+  requiredRoles?: string[];
+  showOnlyUnder?: string;
 }
 
 const navItems: NavItem[] = [
-  { path: '/',            label: 'Home',             icon: IconHome },
-  { path: '/admin',       label: 'Admin Dashboard',  icon: IconLayoutDashboard },
-  { path: '/admin/users', label: 'User Management',  icon: IconUsers },
-  { path: '/admin/roles', label: 'Role Management',  icon: IconKey },
+  { path: '/',              label: 'Home',            icon: IconHome },
+  { path: '/blueprints',    label: 'Blueprints',      icon: IconBooks },
+  { path: '/admin',         label: 'Admin Dashboard', icon: IconLayoutDashboard,  requiredRoles: ['Role 1', 'App Admin'] },
+  { path: '/admin/users',   label: 'User Management', icon: IconUsers,            requiredRoles: ['Role 1', 'App Admin'], showOnlyUnder: '/admin' },
+  { path: '/admin/roles',   label: 'Role Management', icon: IconKey,              requiredRoles: ['Role 1', 'App Admin'], showOnlyUnder: '/admin' },
 ];
 
 interface NavIconProps {
@@ -82,6 +87,8 @@ const POLL_INTERVAL_MS = Number(import.meta.env.VITE_GIBBS_POLL_INTERVAL_MS) || 
 const Sidebar = ({ onNavigate }: SidebarProps) => {
   const navigate = useNavigate();
   const location = useLocation();
+  const { user } = useAuth();
+  const userRoles = user?.roles ?? [];
   const [gibbsOnline, setGibbsOnline] = useState<boolean | null>(null);
 
   useEffect(() => {
@@ -109,14 +116,17 @@ const Sidebar = ({ onNavigate }: SidebarProps) => {
   return (
     <Box style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', height: '100%', paddingTop: '16px' }}>
       <Stack gap="xs" align="center" style={{ flex: 1 }}>
-        {navItems.map((item) => (
-          <NavIcon
-            key={item.path}
-            item={item}
-            active={isActive(item.path)}
-            onClick={() => handleNav(item.path)}
-          />
-        ))}
+        {navItems
+          .filter(item => !item.requiredRoles || item.requiredRoles.some(r => userRoles.includes(r)))
+          .filter(item => !item.showOnlyUnder || location.pathname.startsWith(item.showOnlyUnder))
+          .map((item) => (
+            <NavIcon
+              key={item.path}
+              item={item}
+              active={isActive(item.path)}
+              onClick={() => handleNav(item.path)}
+            />
+          ))}
       </Stack>
 
       <Box pb="md">

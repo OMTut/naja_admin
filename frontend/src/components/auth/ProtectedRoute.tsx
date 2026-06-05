@@ -4,10 +4,11 @@ import LoginComponent from '../login/LoginComponent';
 
 interface ProtectedRouteProps {
   children: ReactNode;
+  requiredRoles?: string[];
 }
 
-const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
-  const { isAuthenticated, loading } = useAuth();
+const ProtectedRoute = ({ children, requiredRoles }: ProtectedRouteProps) => {
+  const { isAuthenticated, user, loading } = useAuth();
 
   if (loading) {
     return (
@@ -21,8 +22,22 @@ const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
     return <LoginComponent />;
   }
 
+  if (requiredRoles && requiredRoles.length > 0) {
+    const userRoles = user?.roles ?? [];
+    const hasRole = requiredRoles.some(r => userRoles.includes(r));
+    if (!hasRole) {
+      return (
+        <div style={{ padding: '2rem', textAlign: 'center' }}>
+          <h2 style={{ color: 'var(--naja-gold)' }}>Access Denied</h2>
+          <p style={{ color: 'var(--naja-text)' }}>
+            You don't have permission to view this page.
+          </p>
+        </div>
+      );
+    }
+  }
+
   return <>{children}</>;
 };
 
 export default ProtectedRoute;
-

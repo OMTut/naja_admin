@@ -9,6 +9,8 @@ from routes.server_admin import router as admin_router
 from routes.roles import router as roles_router
 from routes.users import router as users_router
 from routes.bot import router as bot_router
+from routes.blueprints import router as blueprints_router
+from routes.user_blueprints import router as user_blueprints_router
 from database.connection import test_db_connection
 from services.background_tasks import start_background_tasks, stop_background_tasks, get_background_tasks_status
 from sqlalchemy import text
@@ -76,6 +78,10 @@ app.include_router(users_router, prefix="/api/admin/users", tags=["users"])
 
 # Include bot routes (called by Gibbs, not the frontend)
 app.include_router(bot_router, prefix="/api/bot", tags=["bot"])
+
+# Include blueprint routes
+app.include_router(blueprints_router, prefix="/api/admin/blueprints", tags=["blueprints"])
+app.include_router(user_blueprints_router, prefix="/api/user/blueprints", tags=["user-blueprints"])
 
 if __name__ == "__main__":
     import uvicorn

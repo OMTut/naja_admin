@@ -14,9 +14,11 @@ from database.operations.users_roles import get_user_roles, clear_user_roles, ad
 from services.sync_user_roles import sync_user_roles_preserving_app
 from services.discord_api import get_member_profile, get_all_guild_role_ids
 from database.models.role import Role as RoleModel
-from dependencies.auth import require_session
+from dependencies.auth import require_session, require_roles
 
-router = APIRouter()
+ADMIN_ROLES = ("Role 1", "App Admin")
+
+router = APIRouter(dependencies=[Depends(require_roles(*ADMIN_ROLES))])
 
 
 # Pydantic models for request/response

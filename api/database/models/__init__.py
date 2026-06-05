@@ -2,6 +2,7 @@ from .user import User, UserStatus
 from .session import Session
 from .role import Role
 from .permission import Permission
+from .blueprint import ItemCategory, Blueprint, BlueprintIngredient, UserBlueprint
 
-__all__ = ["User", "UserStatus", "Session", "Role", "Permission"]
+__all__ = ["User", "UserStatus", "Session", "Role", "Permission", "ItemCategory", "Blueprint", "BlueprintIngredient", "UserBlueprint"]
 
