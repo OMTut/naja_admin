@@ -1,5 +1,12 @@
 import type { BlueprintSummary, BlueprintDetail, OrgBlueprint, ItemCategory, SyncResult } from '../../types/blueprint';
 
+export interface OrgCategoryCounts {
+  ship_components: number;
+  ship_weapons:    number;
+  fps_weapons:     number;
+  fps_armor:       number;
+}
+
 class BlueprintService {
   private baseUrl = `${import.meta.env.VITE_API_BASE_URL}/api/admin/blueprints`;
 
@@ -27,6 +34,12 @@ class BlueprintService {
   async getOrgBlueprints(): Promise<OrgBlueprint[]> {
     const res = await fetch(`${this.baseUrl}/org`, { credentials: 'include' });
     if (!res.ok) throw new Error('Failed to load org blueprints');
+    return res.json();
+  }
+
+  async getOrgCategoryCounts(): Promise<OrgCategoryCounts> {
+    const res = await fetch(`${this.baseUrl}/stats/org-category-counts`, { credentials: 'include' });
+    if (!res.ok) throw new Error('Failed to load category counts');
     return res.json();
   }
 

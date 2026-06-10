@@ -5,6 +5,7 @@ from typing import Optional, List
 
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
+from sqlalchemy import func, distinct
 from sqlalchemy.orm import Session
 
 from database.connection import get_db
@@ -63,6 +64,37 @@ class OrgBlueprintResponse(BlueprintSummaryResponse):
 
 
 # ── Routes ────────────────────────────────────────────────────────────────────
+
+@router.get("/stats/org-category-counts", response_model=dict)
+async def get_org_category_counts(db: Session = Depends(get_db), _=Depends(require_session)):
+    """Count of distinct org-owned blueprints grouped by category pattern."""
+    rows = (
+        db.query(ItemCategory.record_key, func.count(distinct(Blueprint.uuid)))
+        .join(Blueprint, Blueprint.category_uuid == ItemCategory.uuid)
+        .join(UserBlueprint, UserBlueprint.blueprint_uuid == Blueprint.uuid)
+        .group_by(ItemCategory.record_key)
+        .all()
+    )
+
+    groups = {
+        'ship_components': 0,
+        'ship_weapons':    0,
+        'fps_weapons':     0,
+        'fps_armor':       0,
+    }
+
+    for record_key, count in rows:
+        if 'VehicleComponent' in record_key:
+            groups['ship_components'] += count
+        elif 'VehicleWeapons' in record_key:
+            groups['ship_weapons'] += count
+        elif 'FPSWeapons' in record_key:
+            groups['fps_weapons'] += count
+        elif 'FPSArmours' in record_key:
+            groups['fps_armor'] += count
+
+    return groups
+
 
 # Declared before /{uuid} to avoid route shadowing
 @router.get("/categories", response_model=List[CategoryResponse])

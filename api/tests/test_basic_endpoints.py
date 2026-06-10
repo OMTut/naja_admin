@@ -27,7 +27,8 @@ async def test_health_endpoint():
         
         assert response.status_code == 200
         data = response.json()
-        assert data == {"status": "healthy"}
+        assert data["status"] == "healthy"
+        assert "background_tasks" in data
 
 
 @pytest.mark.asyncio

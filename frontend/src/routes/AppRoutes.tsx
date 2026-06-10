@@ -5,6 +5,7 @@ import HomePageAdmin from "../pages/Admin/HomePageAdmin";
 import RolesPage from "../pages/Admin/RolesPage";
 import UsersPage from "../pages/Admin/UsersPage";
 import BlueprintsPage from "../pages/BlueprintsPage";
+import InventoryPage from "../pages/InventoryPage";
 import LoginPage from "../pages/LoginPage";
 import ProfilePage from "../pages/ProfilePage";
 import ProtectedRoute from "../components/auth/ProtectedRoute";
@@ -82,6 +83,16 @@ const AppRoutes = () => (
                     <ProtectedRoute>
                         <Layout>
                             <BlueprintsPage />
+                        </Layout>
+                    </ProtectedRoute>
+                }
+            />
+            <Route
+                path="/inventory"
+                element={
+                    <ProtectedRoute>
+                        <Layout>
+                            <InventoryPage />
                         </Layout>
                     </ProtectedRoute>
                 }

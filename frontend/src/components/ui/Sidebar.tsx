@@ -5,6 +5,7 @@ import {
   IconUsers,
   IconKey,
   IconBooks,
+  IconPackage,
 } from '@tabler/icons-react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useState, useEffect } from 'react';
@@ -25,6 +26,7 @@ interface NavItem {
 const navItems: NavItem[] = [
   { path: '/',              label: 'Home',            icon: IconHome },
   { path: '/blueprints',    label: 'Blueprints',      icon: IconBooks },
+  { path: '/inventory',    label: 'Inventory',        icon: IconPackage },
   { path: '/admin',         label: 'Admin Dashboard', icon: IconLayoutDashboard,  requiredRoles: ['Role 1', 'App Admin'] },
   { path: '/admin/users',   label: 'User Management', icon: IconUsers,            requiredRoles: ['Role 1', 'App Admin'], showOnlyUnder: '/admin' },
   { path: '/admin/roles',   label: 'Role Management', icon: IconKey,              requiredRoles: ['Role 1', 'App Admin'], showOnlyUnder: '/admin' },

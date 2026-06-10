@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { Stack, Group, Text, Button } from '@mantine/core';
 import { IconRefresh } from '@tabler/icons-react';
 import { blueprintService } from '../../services/admin/blueprintService';
+import { oreService } from '../../services/admin/oreService';
 
 const sectionLabel = {
   textTransform: 'uppercase' as const,
@@ -12,9 +13,12 @@ const sectionLabel = {
 
 const HomePageAdmin = () => {
   const navigate = useNavigate();
-  const [syncing, setSyncing]     = useState(false);
-  const [syncMsg, setSyncMsg]     = useState('');
-  const [syncError, setSyncError] = useState('');
+  const [syncing, setSyncing]           = useState(false);
+  const [syncMsg, setSyncMsg]           = useState('');
+  const [syncError, setSyncError]       = useState('');
+  const [syncingOres, setSyncingOres]   = useState(false);
+  const [syncOresMsg, setSyncOresMsg]   = useState('');
+  const [syncOresError, setSyncOresError] = useState('');
 
   const handleSync = async () => {
     setSyncing(true);
@@ -30,6 +34,21 @@ const HomePageAdmin = () => {
       setSyncError(err instanceof Error ? err.message : 'Sync failed.');
     } finally {
       setSyncing(false);
+    }
+  };
+
+  const handleSyncOres = async () => {
+    setSyncingOres(true);
+    setSyncOresMsg('');
+    setSyncOresError('');
+    try {
+      const res = await oreService.sync();
+      const { ores: o } = res.result;
+      setSyncOresMsg(`Sync complete — ores: +${o.added} / ~${o.updated}`);
+    } catch (err) {
+      setSyncOresError(err instanceof Error ? err.message : 'Sync failed.');
+    } finally {
+      setSyncingOres(false);
     }
   };
 
@@ -64,6 +83,19 @@ const HomePageAdmin = () => {
           </Button>
           {syncMsg   && <Text size="sm" c="var(--naja-teal)">{syncMsg}</Text>}
           {syncError && <Text size="sm" c="red">{syncError}</Text>}
+        </Group>
+        <Group gap="sm" align="center">
+          <Button
+            variant="outline"
+            color="najaGold"
+            leftSection={<IconRefresh size={16} />}
+            loading={syncingOres}
+            onClick={handleSyncOres}
+          >
+            Sync Ores
+          </Button>
+          {syncOresMsg   && <Text size="sm" c="var(--naja-teal)">{syncOresMsg}</Text>}
+          {syncOresError && <Text size="sm" c="red">{syncOresError}</Text>}
         </Group>
       </Stack>
     </Stack>
