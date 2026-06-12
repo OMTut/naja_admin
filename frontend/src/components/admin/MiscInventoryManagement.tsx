@@ -199,7 +199,7 @@ const MiscInventoryManagement = () => {
             <ActionIcon
               variant="subtle"
               color="red"
-              size="md"
+              size="40px"
               onClick={e => { e.stopPropagation(); startDelete(item); }}
             >
               <IconTrash size={18} />
