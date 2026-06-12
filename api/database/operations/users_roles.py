@@ -17,18 +17,19 @@ def get_user_roles(user_id: int) -> list[dict]:
     db: DBSession = SessionLocal()
     try:
         query = text("""
-            SELECT r.role_discord_id, r.role_name, r.grants_access FROM roles r
-            JOIN users_roles ur ON r.role_id = ur.role_id 
+            SELECT r.role_discord_id, r.role_name, r.grants_access, r.grants_inventory FROM roles r
+            JOIN users_roles ur ON r.role_id = ur.role_id
             WHERE ur.user_id = :user_id
-            Order BY r.role_name 
+            Order BY r.role_name
         """)
         result = db.execute(query, {"user_id": user_id})
         rows = result.fetchall()
         return [
             {
-                "role_discord_id":row[0],
-                "role_name":row[1],
-                "grants_access":row[2]
+                "role_discord_id":   row[0],
+                "role_name":         row[1],
+                "grants_access":     row[2],
+                "grants_inventory":  row[3],
             }
             for row in rows
         ]

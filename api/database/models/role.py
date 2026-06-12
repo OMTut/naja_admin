@@ -11,15 +11,16 @@ class Role(Base):
     role_discord_id = Column(String(20), unique=True, nullable=False, index=True)  # VARCHAR(20) UNIQUE NOT NULL
     role_name = Column(String(32), unique=True, nullable=False)  # VARCHAR(32) UNIQUE NOT NULL
     role_description = Column(String(255), nullable=True)  # VARCHAR(255)
-    grants_access = Column(Boolean, nullable=False, default=False)  # Boolean to determine if role grants access
+    grants_access = Column(Boolean, nullable=False, default=False)  # Boolean to determine if role grants app access
+    grants_inventory = Column(Boolean, nullable=False, default=False)  # Boolean to determine if role grants inventory access
     created_at = Column(
         DateTime(timezone=True), 
-        server_default=func.current_timestamp()  # TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+        server_default=func.current_timestamp()  
     )
     updated_at = Column(
         DateTime(timezone=True), 
         server_default=func.current_timestamp(),
-        onupdate=func.current_timestamp()  # TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+        onupdate=func.current_timestamp()
     )
 
     # Relationships - temporarily commented out until migration issue is resolved

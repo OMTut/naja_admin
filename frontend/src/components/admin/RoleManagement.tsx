@@ -22,6 +22,7 @@ const RoleManagement = () => {
     role_name: '',
     role_description: '',
     grants_access: false,
+    grants_inventory: false,
   });
 
   useEffect(() => { loadRoles(); }, []);
@@ -58,6 +59,7 @@ const RoleManagement = () => {
         role_name: formData.role_name,
         role_description: formData.role_description,
         grants_access: formData.grants_access,
+        grants_inventory: formData.grants_inventory,
       };
       await roleService.updateRole(editingRole.role_id, updateData);
       cancelForm();
@@ -85,6 +87,7 @@ const RoleManagement = () => {
       role_name: role.role_name,
       role_description: role.role_description || '',
       grants_access: role.grants_access,
+      grants_inventory: role.grants_inventory,
     });
     open();
   };
@@ -104,7 +107,7 @@ const RoleManagement = () => {
   };
 
   const resetForm = () => {
-    setFormData({ role_discord_id: undefined, role_name: '', role_description: '', grants_access: false });
+    setFormData({ role_discord_id: undefined, role_name: '', role_description: '', grants_access: false, grants_inventory: false });
   };
 
   if (loading) return <Text c="#CCAC31">Loading roles...</Text>;
@@ -154,6 +157,13 @@ const RoleManagement = () => {
               color="najaGold"
               styles={{ label: { color: '#DDD3BA', fontFamily: "'Vollkorn', Georgia, serif" } }}
             />
+            <Checkbox
+              label="Grants Inventory Management"
+              checked={formData.grants_inventory}
+              onChange={(e) => setFormData({ ...formData, grants_inventory: e.currentTarget.checked })}
+              color="najaGold"
+              styles={{ label: { color: '#DDD3BA', fontFamily: "'Vollkorn', Georgia, serif" } }}
+            />
             <Group justify="flex-end" mt="md">
               <Button variant="outline" color="gray" onClick={cancelForm}>Cancel</Button>
               <Button type="submit" color="najaGold">{editingRole ? 'Update' : 'Create'}</Button>
@@ -170,6 +180,7 @@ const RoleManagement = () => {
             <Table.Th>Name</Table.Th>
             <Table.Th>Description</Table.Th>
             <Table.Th>Grants Access</Table.Th>
+            <Table.Th>Grants Inventory</Table.Th>
             <Table.Th>Actions</Table.Th>
           </Table.Tr>
         </Table.Thead>
@@ -183,6 +194,11 @@ const RoleManagement = () => {
               <Table.Td>
                 <Text size="sm" c={role.grants_access ? 'var(--naja-gold)' : 'dimmed'}>
                   {role.grants_access ? 'Yes' : 'No'}
+                </Text>
+              </Table.Td>
+              <Table.Td>
+                <Text size="sm" c={role.grants_inventory ? 'var(--naja-gold)' : 'dimmed'}>
+                  {role.grants_inventory ? 'Yes' : 'No'}
                 </Text>
               </Table.Td>
               <Table.Td>

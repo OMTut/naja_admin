@@ -241,15 +241,20 @@ async def resync_user(user_id: int, db: Session = Depends(get_db), _=Depends(req
     guild_role_task = asyncio.create_task(get_all_guild_role_ids())
 
     headers = {"X-API-Key": api_key}
-    async with httpx.AsyncClient() as client:
-        member_resp = await client.get(
-            f"{gibbs_url}/api/members/{user.discord_id}/roles",
-            headers=headers,
-            timeout=10.0,
-        )
+    try:
+        async with httpx.AsyncClient() as client:
+            member_resp = await client.get(
+                f"{gibbs_url}/api/members/{user.discord_id}/roles",
+                headers=headers,
+                timeout=10.0,
+            )
         if not member_resp.is_success:
             raise HTTPException(status_code=502, detail="Failed to fetch member roles from Discord")
         role_discord_ids = member_resp.json().get("role_discord_ids", [])
+    except httpx.ConnectError:
+        raise HTTPException(status_code=503, detail=f"Cannot reach Gibbs at {gibbs_url} — is the bot running?")
+    except httpx.TimeoutException:
+        raise HTTPException(status_code=504, detail="Gibbs did not respond in time")
 
     profile, all_guild_role_ids = await asyncio.gather(profile_task, guild_role_task)
 

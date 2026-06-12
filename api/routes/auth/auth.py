@@ -63,7 +63,8 @@ async def get_current_user(request: Request):
     # sync if roles have changed, preserving app-only roles
     if set(db_user_discord_roles) != set(live_discord_roles):
         all_guild_role_ids = await get_all_guild_role_ids()
-        sync_user_roles_preserving_app(user.id, live_discord_roles, all_guild_role_ids)
+        if all_guild_role_ids:
+            sync_user_roles_preserving_app(user.id, live_discord_roles, all_guild_role_ids)
     
     if not has_access:
         print(f"Session Check: Access - Role denied.")
@@ -86,6 +87,7 @@ async def get_current_user(request: Request):
             "server_nickname": user.server_nickname,
             "status": user.status.value,
             "roles": [r["name"] for r in db_user_roles],
+            "grants_inventory": any(r.get("grants_inventory", False) for r in db_user_roles),
         }
     }
 

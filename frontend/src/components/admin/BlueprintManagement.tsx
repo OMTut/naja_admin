@@ -8,6 +8,7 @@ import { IconUsers } from '@tabler/icons-react';
 import { tableStyles, modalStyles } from '../../styles/mantine';
 import { blueprintService } from '../../services/admin/blueprintService';
 import type { OrgBlueprint, BlueprintDetail, ItemCategory } from '../../types/blueprint';
+import { matchesCategory } from '../../utils/categoryFilters';
 
 const displayName = (u: { server_nickname: string | null; global_name: string | null; discord_username: string }) =>
   u.server_nickname ?? u.global_name ?? u.discord_username;
@@ -15,10 +16,11 @@ const displayName = (u: { server_nickname: string | null; global_name: string | 
 interface BlueprintManagementProps {
   search?: string;
   categoryFilter?: string | null;
+  sizeFilter?: string | null;
   categories?: ItemCategory[];
 }
 
-const BlueprintManagement = ({ search = '', categoryFilter = null }: BlueprintManagementProps) => {
+const BlueprintManagement = ({ search = '', categoryFilter = null, sizeFilter = null }: BlueprintManagementProps) => {
   const [orgBlueprints, setOrgBlueprints] = useState<OrgBlueprint[]>([]);
   const [loading, setLoading]             = useState(true);
   const [error, setError]                 = useState('');
@@ -50,9 +52,8 @@ const BlueprintManagement = ({ search = '', categoryFilter = null }: BlueprintMa
   };
 
   const filtered = orgBlueprints.filter(b => {
-    const matchesCat = !categoryFilter || b.category_uuid === categoryFilter;
     const matchesSearch = !search || b.output_name?.toLowerCase().includes(search.toLowerCase());
-    return matchesCat && matchesSearch;
+    return matchesCategory(b, categoryFilter, sizeFilter) && matchesSearch;
   });
 
   if (loading) return <Text c="var(--naja-gold)">Loading org blueprints...</Text>;

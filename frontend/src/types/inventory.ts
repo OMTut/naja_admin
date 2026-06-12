@@ -33,3 +33,73 @@ export interface ResourceInventoryUpdate {
   location?:    string;
   held_by?:     number;
 }
+
+// ── Misc Inventory ────────────────────────────────────────────────────────────
+
+export interface MiscCategory {
+  id:         number;
+  name:       string;
+  item_count: number;
+  created_at: string;
+}
+
+export interface InventoryCatalogItem {
+  id:             number;
+  display_name:   string;
+  category:       MiscCategory | null;
+  total_quantity: number;
+  holder_count:   number;
+  created_at:     string;
+}
+
+export interface MiscInventoryEntry {
+  id:              number;
+  catalog_item_id: number;
+  display_name:    string;
+  category:        MiscCategory | null;
+  location:        string | null;
+  quantity:        number;
+  status:          'active' | 'depleted';
+  held_by:         InventoryUser | null;
+  added_by:        InventoryUser | null;
+  created_at:      string;
+  updated_at:      string;
+}
+
+export interface MiscInventoryEvent {
+  id:           number;
+  item_id:      number;
+  event_type:   'added' | 'transferred' | 'consumed';
+  quantity:     number;
+  from_user:    InventoryUser | null;
+  to_user:      InventoryUser | null;
+  performed_by: InventoryUser | null;
+  created_at:   string;
+}
+
+export interface CatalogItemCreate {
+  display_name: string;
+  category_id?: number;
+}
+
+export interface CatalogItemUpdate {
+  display_name?: string;
+  category_id?:  number;
+}
+
+export interface HoldingCreate {
+  catalog_item_id: number;
+  location?:       string;
+  quantity:        number;
+  held_by?:        number;
+  added_by?:       number;
+}
+
+export interface MiscTransferBody {
+  to_user_id: number;
+  quantity:   number;
+}
+
+export interface MiscConsumeBody {
+  quantity: number;
+}

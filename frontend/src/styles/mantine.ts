@@ -40,6 +40,20 @@ export const menuStyles = {
   item:     { color: 'var(--naja-text)', fontFamily: "'Vollkorn', serif", fontSize: '14px' },
 };
 
+export const drawerStyles = {
+  content: {
+    backgroundColor: 'var(--naja-sidebar)',
+    borderLeft: '1px solid rgba(204, 172, 49, 0.3)',
+  },
+  header: {
+    backgroundColor: 'var(--naja-sidebar)',
+    borderBottom: '1px solid rgba(204, 172, 49, 0.2)',
+  },
+  close: {
+    color: 'var(--naja-gold)',
+  },
+};
+
 export const tableStyles = {
   th: {
     color: 'var(--naja-gold)',

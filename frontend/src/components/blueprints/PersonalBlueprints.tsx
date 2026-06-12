@@ -9,16 +9,18 @@ import { tableStyles, modalStyles, inputStyles } from '../../styles/mantine';
 import { blueprintService } from '../../services/admin/blueprintService';
 import { userBlueprintService } from '../../services/user/userBlueprintService';
 import type { UserBlueprintEntry, BlueprintSummary, BlueprintDetail, ItemCategory } from '../../types/blueprint';
+import { buildCategoryOptions, matchesCategory } from '../../utils/categoryFilters';
 
 interface PersonalBlueprintsProps {
   search: string;
   categoryFilter: string | null;
+  sizeFilter: string | null;
   categories: ItemCategory[];
   addModalOpen: boolean;
   onCloseAdd: () => void;
 }
 
-const PersonalBlueprints = ({ search, categoryFilter, categories, addModalOpen, onCloseAdd }: PersonalBlueprintsProps) => {
+const PersonalBlueprints = ({ search, categoryFilter, sizeFilter, categories, addModalOpen, onCloseAdd }: PersonalBlueprintsProps) => {
   const [myBlueprints, setMyBlueprints]     = useState<UserBlueprintEntry[]>([]);
   const [catalog, setCatalog]               = useState<BlueprintSummary[]>([]);
   const [loading, setLoading]               = useState(true);
@@ -86,22 +88,17 @@ const PersonalBlueprints = ({ search, categoryFilter, categories, addModalOpen, 
   const myUuids = new Set(myBlueprints.map(b => b.uuid));
 
   const filteredMine = myBlueprints.filter(b => {
-    const matchesCat = !categoryFilter || b.category_uuid === categoryFilter;
     const matchesSearch = !search || b.output_name?.toLowerCase().includes(search.toLowerCase());
-    return matchesCat && matchesSearch;
+    return matchesCategory(b, categoryFilter, sizeFilter) && matchesSearch;
   });
 
   const filteredCatalog = catalog.filter(b => {
     const notOwned = !myUuids.has(b.uuid);
-    const matchesCat = !catalogCategory || b.category_uuid === catalogCategory;
     const matchesSearch = !catalogSearch || b.output_name?.toLowerCase().includes(catalogSearch.toLowerCase());
-    return notOwned && matchesCat && matchesSearch;
+    return notOwned && matchesCategory(b, catalogCategory) && matchesSearch;
   });
 
-  const categoryOptions = [
-    { value: '', label: 'All Categories' },
-    ...categories.map(c => ({ value: c.uuid, label: c.label })),
-  ];
+  const categoryOptions = buildCategoryOptions(categories);
 
   if (loading) return <Text c="var(--naja-gold)">Loading blueprints...</Text>;
 

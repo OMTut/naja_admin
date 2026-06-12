@@ -6,6 +6,9 @@ import RolesPage from "../pages/Admin/RolesPage";
 import UsersPage from "../pages/Admin/UsersPage";
 import BlueprintsPage from "../pages/BlueprintsPage";
 import InventoryPage from "../pages/InventoryPage";
+import ManageInventoryPage from "../pages/Admin/ManageInventoryPage";
+import ResourceInventoryPage from "../pages/ResourceInventoryPage";
+import MiscInventoryPage from "../pages/MiscInventoryPage";
 import LoginPage from "../pages/LoginPage";
 import ProfilePage from "../pages/ProfilePage";
 import ProtectedRoute from "../components/auth/ProtectedRoute";
@@ -58,6 +61,16 @@ const AppRoutes = () => (
                 }
             />
             <Route
+                path="/admin/inventory"
+                element={
+                    <ProtectedRoute requiredRoles={ADMIN_ROLES}>
+                        <Layout>
+                            <ManageInventoryPage />
+                        </Layout>
+                    </ProtectedRoute>
+                }
+            />
+            <Route
                 path="/profile"
                 element={
                     <ProtectedRoute>
@@ -93,6 +106,26 @@ const AppRoutes = () => (
                     <ProtectedRoute>
                         <Layout>
                             <InventoryPage />
+                        </Layout>
+                    </ProtectedRoute>
+                }
+            />
+            <Route
+                path="/inventory/resources"
+                element={
+                    <ProtectedRoute>
+                        <Layout>
+                            <ResourceInventoryPage />
+                        </Layout>
+                    </ProtectedRoute>
+                }
+            />
+            <Route
+                path="/inventory/misc"
+                element={
+                    <ProtectedRoute>
+                        <Layout>
+                            <MiscInventoryPage />
                         </Layout>
                     </ProtectedRoute>
                 }

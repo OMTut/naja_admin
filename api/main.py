@@ -13,6 +13,7 @@ from routes.blueprints import router as blueprints_router
 from routes.user_blueprints import router as user_blueprints_router
 from routes.ores import router as ores_router
 from routes.resource_inventory import router as resource_inventory_router
+from routes.misc_inventory import router as misc_inventory_router
 from database.connection import test_db_connection
 from services.background_tasks import start_background_tasks, stop_background_tasks, get_background_tasks_status
 from sqlalchemy import text
@@ -86,6 +87,7 @@ app.include_router(blueprints_router, prefix="/api/admin/blueprints", tags=["blu
 app.include_router(user_blueprints_router, prefix="/api/user/blueprints", tags=["user-blueprints"])
 app.include_router(ores_router, prefix="/api/admin/ores", tags=["ores"])
 app.include_router(resource_inventory_router, prefix="/api/inventory/resources", tags=["inventory"])
+app.include_router(misc_inventory_router,     prefix="/api/inventory/misc",      tags=["misc-inventory"])
 
 if __name__ == "__main__":
     import uvicorn

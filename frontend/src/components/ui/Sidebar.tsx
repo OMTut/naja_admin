@@ -6,6 +6,8 @@ import {
   IconKey,
   IconBooks,
   IconPackage,
+  IconDiamond,
+  IconBriefcase,
 } from '@tabler/icons-react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useState, useEffect } from 'react';
@@ -26,10 +28,13 @@ interface NavItem {
 const navItems: NavItem[] = [
   { path: '/',              label: 'Home',            icon: IconHome },
   { path: '/blueprints',    label: 'Blueprints',      icon: IconBooks },
-  { path: '/inventory',    label: 'Inventory',        icon: IconPackage },
+  { path: '/inventory',           label: 'Inventory',        icon: IconPackage },
+  { path: '/inventory/resources', label: 'Resources',        icon: IconDiamond,   showOnlyUnder: '/inventory' },
+  { path: '/inventory/misc',      label: 'Misc. Items',      icon: IconBriefcase, showOnlyUnder: '/inventory' },
   { path: '/admin',         label: 'Admin Dashboard', icon: IconLayoutDashboard,  requiredRoles: ['Role 1', 'App Admin'] },
-  { path: '/admin/users',   label: 'User Management', icon: IconUsers,            requiredRoles: ['Role 1', 'App Admin'], showOnlyUnder: '/admin' },
-  { path: '/admin/roles',   label: 'Role Management', icon: IconKey,              requiredRoles: ['Role 1', 'App Admin'], showOnlyUnder: '/admin' },
+  { path: '/admin/users',     label: 'User Management',     icon: IconUsers,     requiredRoles: ['Role 1', 'App Admin'], showOnlyUnder: '/admin' },
+  { path: '/admin/roles',     label: 'Role Management',     icon: IconKey,       requiredRoles: ['Role 1', 'App Admin'], showOnlyUnder: '/admin' },
+  { path: '/admin/inventory', label: 'Manage Inventory',    icon: IconPackage,   requiredRoles: ['Role 1', 'App Admin'], showOnlyUnder: '/admin' },
 ];
 
 interface NavIconProps {
@@ -97,7 +102,8 @@ const Sidebar = ({ onNavigate }: SidebarProps) => {
     const check = async () => {
       try {
         const res = await fetch(GIBBS_HEALTH_URL, { credentials: 'include', signal: AbortSignal.timeout(5000) });
-        setGibbsOnline(res.ok);
+        const data = await res.json();
+        setGibbsOnline(res.ok && data.online === true);
       } catch {
         setGibbsOnline(false);
       }

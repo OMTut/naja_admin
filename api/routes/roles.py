@@ -23,12 +23,14 @@ class RoleCreate(BaseModel):
     role_name: str
     role_description: Optional[str] = None
     grants_access: bool = False
+    grants_inventory: bool = False
 
 
 class RoleUpdate(BaseModel):
     role_name: Optional[str] = None
     role_description: Optional[str] = None
     grants_access: Optional[bool] = None
+    grants_inventory: Optional[bool] = None
 
 
 class RoleResponse(BaseModel):
@@ -37,6 +39,7 @@ class RoleResponse(BaseModel):
     role_name: str
     role_description: Optional[str]
     grants_access: bool
+    grants_inventory: bool
     created_at: datetime
     updated_at: datetime
 
@@ -80,7 +83,8 @@ async def create_role(role_data: RoleCreate, db: Session = Depends(get_db), _=De
         role_discord_id=role_data.role_discord_id or f"app-{uuid.uuid4().hex[:16]}",
         role_name=role_data.role_name,
         role_description=role_data.role_description,
-        grants_access=role_data.grants_access
+        grants_access=role_data.grants_access,
+        grants_inventory=role_data.grants_inventory,
     )
     
     db.add(new_role)
@@ -111,7 +115,10 @@ async def update_role(role_id: int, role_data: RoleUpdate, db: Session = Depends
     
     if role_data.grants_access is not None:
         role.grants_access = role_data.grants_access
-    
+
+    if role_data.grants_inventory is not None:
+        role.grants_inventory = role_data.grants_inventory
+
     db.commit()
     db.refresh(role)
     return role

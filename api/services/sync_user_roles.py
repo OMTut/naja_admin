@@ -108,12 +108,16 @@ def sync_user_roles_preserving_app(
 
         clear_user_roles(user_id)
 
+        already_synced = set()
         for role in valid_discord_roles:
             role_id = getRoleIdByDiscordId(role["role_discord_id"])
             if role_id:
                 add_user_role(user_id, role_id)
+                already_synced.add(role["role_discord_id"])
 
         for discord_id in app_only_discord_ids:
+            if discord_id in already_synced:
+                continue
             role_id = getRoleIdByDiscordId(discord_id)
             if role_id:
                 add_user_role(user_id, role_id)
@@ -149,9 +153,10 @@ def get_user_current_roles(user_id: int) -> list[dict]:
         # Transform to the service layer format with enhanced field names
         return [
             {
-                "discord_id": role["role_discord_id"],
-                "name": role["role_name"],
-                "grants_access": role["grants_access"]
+                "discord_id":       role["role_discord_id"],
+                "name":             role["role_name"],
+                "grants_access":    role["grants_access"],
+                "grants_inventory": role["grants_inventory"],
             }
             for role in basic_roles
         ]
