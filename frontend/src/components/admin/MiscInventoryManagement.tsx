@@ -1,11 +1,11 @@
 import { useState, useEffect } from 'react';
 import {
-  Stack, Group, Text, Table, Button, Modal,
-  TextInput, ActionIcon, Badge,
+  Stack, Group, Text, Button, Drawer, Divider,
+  TextInput, ActionIcon, Box,
 } from '@mantine/core';
 import { useDisclosure } from '@mantine/hooks';
-import { IconPlus, IconTrash, IconEdit, IconCategory } from '@tabler/icons-react';
-import { tableStyles, modalStyles, inputStyles } from '../../styles/mantine';
+import { IconPlus, IconTrash, IconCategory } from '@tabler/icons-react';
+import { drawerStyles, inputStyles } from '../../styles/mantine';
 import { miscInventoryService } from '../../services/inventory/miscInventoryService';
 import { CategorySelect } from '../inventory/CategorySelect';
 import InventoryCategoryManagement from './InventoryCategoryManagement';
@@ -17,29 +17,31 @@ const MiscInventoryManagement = () => {
   const [loading,    setLoading]    = useState(true);
   const [error,      setError]      = useState('');
 
-  // Add modal
+  // Add drawer
   const [addOpen, { open: openAdd, close: closeAdd }] = useDisclosure(false);
   const [addName,       setAddName]       = useState('');
   const [addCategoryId, setAddCategoryId] = useState<number | null>(null);
   const [addSubmitting, setAddSubmitting] = useState(false);
   const [addError,      setAddError]      = useState('');
 
-  // Edit modal
+  // Edit drawer
   const [editOpen, { open: openEdit, close: closeEdit }] = useDisclosure(false);
-  const [editTarget,     setEditTarget]     = useState<InventoryCatalogItem | null>(null);
-  const [editName,       setEditName]       = useState('');
-  const [editCategoryId, setEditCategoryId] = useState<number | null>(null);
-  const [editSubmitting, setEditSubmitting] = useState(false);
-  const [editError,      setEditError]      = useState('');
+  const [editingId,    setEditingId]    = useState<number | null>(null);
+  const [editName,     setEditName]     = useState('');
+  const [editCatId,    setEditCatId]    = useState<number | null>(null);
+  const [editSubmit,   setEditSubmit]   = useState(false);
+  const [editError,    setEditError]    = useState('');
+
+  // Inline delete
+  const [deleteId,     setDeleteId]     = useState<number | null>(null);
+  const [deleteSubmit, setDeleteSubmit] = useState(false);
+  const [deleteError,  setDeleteError]  = useState('');
 
   // Category drawer
   const [catDrawerOpen, { open: openCatDrawer, close: closeCatDrawer }] = useDisclosure(false);
 
-  // Delete confirm
-  const [deleteOpen, { open: openDelete, close: closeDelete }] = useDisclosure(false);
-  const [deleteTarget,     setDeleteTarget]     = useState<InventoryCatalogItem | null>(null);
-  const [deleteSubmitting, setDeleteSubmitting] = useState(false);
-  const [deleteError,      setDeleteError]      = useState('');
+  // Filter
+  const [activeFilter, setActiveFilter] = useState<number | 'uncategorized' | null>(null);
 
   useEffect(() => {
     Promise.all([
@@ -57,7 +59,7 @@ const MiscInventoryManagement = () => {
     return cat;
   };
 
-  // ── Add ────────────────────────────────────────────────────────────────────
+  // ── Add ──────────────────────────────────────────────────────────────────────
 
   const handleAdd = async () => {
     if (!addName.trim()) { setAddError('Item name is required.'); return; }
@@ -77,55 +79,136 @@ const MiscInventoryManagement = () => {
     }
   };
 
-  // ── Edit ───────────────────────────────────────────────────────────────────
+  // ── Edit drawer ──────────────────────────────────────────────────────────────
 
-  const openEditFor = (item: InventoryCatalogItem) => {
-    setEditTarget(item);
+  const startEdit = (item: InventoryCatalogItem) => {
+    setEditingId(item.id);
     setEditName(item.display_name);
-    setEditCategoryId(item.category?.id ?? null);
+    setEditCatId(item.category?.id ?? null);
     setEditError('');
     openEdit();
   };
 
+  const cancelEdit = () => { closeEdit(); setEditError(''); };
+
   const handleEdit = async () => {
-    if (!editTarget) return;
+    if (!editingId) return;
     if (!editName.trim()) { setEditError('Item name is required.'); return; }
-    setEditSubmitting(true); setEditError('');
+    setEditSubmit(true); setEditError('');
     try {
-      const updated = await miscInventoryService.updateCatalogItem(editTarget.id, {
+      const updated = await miscInventoryService.updateCatalogItem(editingId, {
         display_name: editName.trim(),
-        category_id:  editCategoryId ?? undefined,
+        category_id:  editCatId ?? undefined,
       });
-      setCatalog(prev => prev.map(c => c.id === updated.id ? updated : c));
+      setCatalog(prev => prev.map(c => c.id === editingId ? updated : c));
       closeEdit();
     } catch (err) {
       setEditError(err instanceof Error ? err.message : 'Failed to update item.');
     } finally {
-      setEditSubmitting(false);
+      setEditSubmit(false);
     }
   };
 
-  // ── Delete ─────────────────────────────────────────────────────────────────
+  // ── Inline delete ────────────────────────────────────────────────────────────
 
-  const openDeleteFor = (item: InventoryCatalogItem) => {
-    setDeleteTarget(item);
+  const startDelete = (item: InventoryCatalogItem) => {
+    setDeleteId(item.id);
     setDeleteError('');
-    openDelete();
+    setEditingId(null);
   };
 
-  const handleDelete = async () => {
-    if (!deleteTarget) return;
-    setDeleteSubmitting(true); setDeleteError('');
+  const cancelDelete = () => { setDeleteId(null); setDeleteError(''); };
+
+  const handleDelete = async (id: number) => {
+    setDeleteSubmit(true); setDeleteError('');
     try {
-      await miscInventoryService.deleteCatalogItem(deleteTarget.id);
-      setCatalog(prev => prev.filter(c => c.id !== deleteTarget.id));
-      closeDelete();
+      await miscInventoryService.deleteCatalogItem(id);
+      setCatalog(prev => prev.filter(c => c.id !== id));
+      setDeleteId(null);
     } catch (err) {
       setDeleteError(err instanceof Error ? err.message : 'Failed to delete item.');
     } finally {
-      setDeleteSubmitting(false);
+      setDeleteSubmit(false);
     }
   };
+
+  // ── Grouping ─────────────────────────────────────────────────────────────────
+
+  const groups = categories
+    .map(cat => ({ cat, items: catalog.filter(i => i.category?.id === cat.id) }))
+    .filter(g => g.items.length > 0);
+
+  const uncategorized = catalog.filter(i => !i.category);
+
+  // ── Row renderers ────────────────────────────────────────────────────────────
+
+  const renderItem = (item: InventoryCatalogItem, idx: number) => (
+    <Box
+      key={item.id}
+      px="sm"
+      py="xs"
+      className={deleteId !== item.id ? 'inventory-row' : undefined}
+      style={{
+        backgroundColor: idx % 2 === 0 ? 'rgba(255,255,255,0.03)' : 'transparent',
+        borderRadius: 4,
+      }}
+    >
+      {deleteId === item.id ? (
+        <Stack
+          gap={6}
+          onBlur={e => { if (!e.currentTarget.contains(e.relatedTarget)) cancelDelete(); }}
+        >
+          {item.total_quantity > 0 ? (
+            <Text size="sm" c="orange">
+              <Text span fw={700} c="var(--naja-gold)">{item.display_name}</Text> has{' '}
+              <Text span fw={700}>{item.total_quantity}</Text> unit{item.total_quantity !== 1 ? 's' : ''} held by members.
+              All holdings must be transferred, consumed, or removed first.
+            </Text>
+          ) : (
+            <Text size="sm" c="var(--naja-text)">
+              Remove <Text span fw={700} c="var(--naja-gold)">{item.display_name}</Text>? This cannot be undone.
+            </Text>
+          )}
+          {deleteError && <Text size="xs" c="red">{deleteError}</Text>}
+          <Group gap="xs">
+            {item.total_quantity === 0 && (
+              <Button size="compact-sm" variant="outline" color="red" onClick={() => handleDelete(item.id)} loading={deleteSubmit}>
+                Confirm
+              </Button>
+            )}
+            <Button size="compact-sm" variant="outline" color="gray" onClick={cancelDelete} disabled={deleteSubmit} autoFocus>
+              Cancel
+            </Button>
+          </Group>
+        </Stack>
+
+      ) : (
+        <Group
+          justify="space-between"
+          align="center"
+          onClick={() => startEdit(item)}
+          style={{ cursor: 'pointer' }}
+        >
+          <Group>
+            <Text size="md" c="var(--naja-text)">{item.display_name}</Text>
+            {item.total_quantity > 0 && (
+              <Text size="sm" c="dimmed">- Qty: {item.total_quantity}</Text>
+            )}
+          </Group>
+          <Group gap="md">
+            <ActionIcon
+              variant="subtle"
+              color="red"
+              size="md"
+              onClick={e => { e.stopPropagation(); startDelete(item); }}
+            >
+              <IconTrash size={18} />
+            </ActionIcon>
+          </Group>
+        </Group>
+      )}
+    </Box>
+  );
 
   if (loading) return <Text c="var(--naja-gold)">Loading...</Text>;
 
@@ -134,20 +217,10 @@ const MiscInventoryManagement = () => {
       {error && <Text c="red">{error}</Text>}
 
       <Group justify="flex-end">
-        <Button
-          variant="subtle"
-          color="najaGold"
-          leftSection={<IconCategory size={16} />}
-          onClick={openCatDrawer}
-        >
+        <Button variant="subtle" color="najaGold" leftSection={<IconCategory size={16} />} onClick={openCatDrawer}>
           Manage Categories
         </Button>
-        <Button
-          variant="outline"
-          color="najaGold"
-          leftSection={<IconPlus size={16} />}
-          onClick={openAdd}
-        >
+        <Button variant="outline" color="najaGold" leftSection={<IconPlus size={16} />} onClick={openAdd}>
           Add Item to Track
         </Button>
       </Group>
@@ -155,53 +228,91 @@ const MiscInventoryManagement = () => {
       {catalog.length === 0 ? (
         <Text c="var(--naja-teal)">No items defined yet. Add items to track above.</Text>
       ) : (
-        <Table striped highlightOnHover styles={tableStyles}>
-          <Table.Thead>
-            <Table.Tr>
-              <Table.Th>Item</Table.Th>
-              <Table.Th>Category</Table.Th>
-              <Table.Th>Org Qty</Table.Th>
-              <Table.Th>Holders</Table.Th>
-              <Table.Th></Table.Th>
-            </Table.Tr>
-          </Table.Thead>
-          <Table.Tbody>
-            {catalog.map(item => (
-              <Table.Tr key={item.id}>
-                <Table.Td><Text size="sm" c="var(--naja-text)">{item.display_name}</Text></Table.Td>
-                <Table.Td>
-                  {item.category
-                    ? <Badge variant="outline" color="najaGold" size="sm">{item.category.name}</Badge>
-                    : <Text size="sm" c="dimmed">—</Text>}
-                </Table.Td>
-                <Table.Td><Text size="sm" c="var(--naja-text)">{item.total_quantity}</Text></Table.Td>
-                <Table.Td><Text size="sm" c="var(--naja-text)">{item.holder_count}</Text></Table.Td>
-                <Table.Td>
-                  <Group gap={4}>
-                    <ActionIcon variant="subtle" color="najaGold" size="sm" onClick={() => openEditFor(item)}>
-                      <IconEdit size={14} />
-                    </ActionIcon>
-                    <ActionIcon variant="subtle" color="red" size="sm" onClick={() => openDeleteFor(item)}>
-                      <IconTrash size={14} />
-                    </ActionIcon>
-                  </Group>
-                </Table.Td>
-              </Table.Tr>
+        <Stack gap="xl">
+          {/* ── Filter buttons ─────────────────────────────────────────────────── */}
+          <Group gap="xs" wrap="wrap">
+            <Button
+              size="md"
+              variant="default"
+              className={activeFilter === null ? 'filter-btn filter-btn-active' : 'filter-btn'}
+              onClick={() => { setActiveFilter(null); setDeleteId(null); }}
+            >
+              All
+            </Button>
+            {groups.map(({ cat }) => (
+              <Button
+                key={cat.id}
+                size="md"
+                variant="default"
+                className={activeFilter === cat.id ? 'filter-btn filter-btn-active' : 'filter-btn'}
+                onClick={() => { setActiveFilter(cat.id); setDeleteId(null); }}
+              >
+                {cat.name}
+              </Button>
             ))}
-          </Table.Tbody>
-        </Table>
+            {uncategorized.length > 0 && (
+              <Button
+                size="md"
+                variant="default"
+                className={activeFilter === 'uncategorized' ? 'filter-btn filter-btn-active' : 'filter-btn'}
+                onClick={() => { setActiveFilter('uncategorized'); setDeleteId(null); }}
+              >
+                Uncategorized
+              </Button>
+            )}
+          </Group>
+
+          {groups
+            .filter(g => activeFilter === null || activeFilter === g.cat.id)
+            .map(({ cat, items }) => (
+            <Stack key={cat.id} gap="xs">
+              <Group gap="xs" align="center">
+                <Text size="lg" fw={700} tt="uppercase" c="var(--naja-gold)" style={{ letterSpacing: '0.05em' }}>
+                  {cat.name}
+                </Text>
+                <Divider flex={1} color="rgba(204,172,49,0.15)" />
+              </Group>
+              <Stack gap={0}>
+                {items.map((item, idx) => renderItem(item, idx))}
+              </Stack>
+            </Stack>
+          ))}
+
+          {uncategorized.length > 0 && (activeFilter === null || activeFilter === 'uncategorized') && (
+            <Stack gap="xs">
+              <Group gap="xs" align="center">
+                <Text size="xs" fw={700} tt="uppercase" c="var(--naja-teal)" style={{ letterSpacing: '0.05em' }}>
+                  Uncategorized
+                </Text>
+                <Divider flex={1} color="rgba(204,172,49,0.15)" />
+              </Group>
+              <Stack gap={0}>
+                {uncategorized.map((item, idx) => renderItem(item, idx))}
+              </Stack>
+            </Stack>
+          )}
+        </Stack>
       )}
 
-      {/* ── Add Modal ─────────────────────────────────────────────────────────── */}
-      <Modal opened={addOpen} onClose={closeAdd} title="Add Item to Track" size="sm" styles={modalStyles}>
-        <Stack gap="sm">
+      {/* ── Add Drawer ───────────────────────────────────────────────────────── */}
+      <Drawer
+        opened={addOpen}
+        onClose={closeAdd}
+        title={<Text fw={700} c="var(--naja-gold)" tt="uppercase" size="md" style={{ letterSpacing: '0.05em' }}>Add Item to Track</Text>}
+        position="right"
+        size="lg"
+        styles={drawerStyles}
+      >
+        <Stack gap="sm" pt="xs">
           <TextInput
             label="Item Name"
             placeholder="e.g. Stims, Medpens, Keycard..."
             value={addName}
             onChange={e => setAddName(e.currentTarget.value)}
+            onKeyDown={e => { if (e.key === 'Enter') handleAdd(); }}
             styles={inputStyles}
             required
+            autoFocus
           />
           <CategorySelect
             categories={categories}
@@ -215,67 +326,48 @@ const MiscInventoryManagement = () => {
             <Button variant="outline" color="najaGold" onClick={handleAdd} loading={addSubmitting}>Add</Button>
           </Group>
         </Stack>
-      </Modal>
+      </Drawer>
 
-      {/* ── Edit Modal ────────────────────────────────────────────────────────── */}
-      <Modal opened={editOpen} onClose={closeEdit} title="Edit Item" size="sm" styles={modalStyles}>
-        <Stack gap="sm">
+      {/* ── Edit Drawer ──────────────────────────────────────────────────────── */}
+      <Drawer
+        opened={editOpen}
+        onClose={cancelEdit}
+        title={<Text fw={700} c="var(--naja-gold)" tt="uppercase" size="md" style={{ letterSpacing: '0.05em' }}>Edit Item</Text>}
+        position="right"
+        size="lg"
+        styles={drawerStyles}
+      >
+        <Stack gap="sm" pt="xs">
           <TextInput
             label="Item Name"
             value={editName}
-            onChange={e => setEditName(e.currentTarget.value)}
+            onChange={e => { setEditName(e.currentTarget.value); setEditError(''); }}
+            onKeyDown={e => { if (e.key === 'Enter') handleEdit(); if (e.key === 'Escape') cancelEdit(); }}
             styles={inputStyles}
-            required
+            autoFocus
           />
           <CategorySelect
             categories={categories}
-            value={editCategoryId}
-            onChange={setEditCategoryId}
+            value={editCatId}
+            onChange={setEditCatId}
             onCreateCategory={handleCreateCategory}
           />
           {editError && <Text size="sm" c="red">{editError}</Text>}
           <Group justify="flex-end" mt="xs">
-            <Button variant="subtle" color="gray" onClick={closeEdit} disabled={editSubmitting}>Cancel</Button>
-            <Button variant="outline" color="najaGold" onClick={handleEdit} loading={editSubmitting}>Save</Button>
+            <Button variant="subtle" color="gray" onClick={cancelEdit} disabled={editSubmit}>Cancel</Button>
+            <Button variant="outline" color="najaGold" onClick={handleEdit} loading={editSubmit}>Save</Button>
           </Group>
         </Stack>
-      </Modal>
+      </Drawer>
 
-      {/* ── Delete Confirm ────────────────────────────────────────────────────── */}
-      <Modal opened={deleteOpen} onClose={closeDelete} title="Remove Item" size="sm" styles={modalStyles}>
-        <Stack gap="md">
-          {(deleteTarget?.total_quantity ?? 0) > 0 ? (
-            <Text size="sm" c="var(--naja-text)">
-              <Text span fw={700} c="var(--naja-gold)">{deleteTarget?.display_name}</Text> has{' '}
-              <Text span fw={700}>{deleteTarget?.total_quantity}</Text> units currently held by org members.
-              All holdings must be transferred, consumed or removed before this item can be deleted.
-            </Text>
-          ) : (
-            <Text size="sm" c="var(--naja-text)">
-              Remove <Text span fw={700} c="var(--naja-gold)">{deleteTarget?.display_name}</Text> from
-              the tracked items list? This cannot be undone.
-            </Text>
-          )}
-          {deleteError && <Text size="sm" c="red">{deleteError}</Text>}
-          <Group justify="flex-end">
-            <Button variant="subtle" color="gray" onClick={closeDelete} disabled={deleteSubmitting}>Cancel</Button>
-            <Button
-              variant="outline"
-              color="red"
-              onClick={handleDelete}
-              loading={deleteSubmitting}
-              disabled={(deleteTarget?.total_quantity ?? 0) > 0}
-            >
-              Remove
-            </Button>
-          </Group>
-        </Stack>
-      </Modal>
       <InventoryCategoryManagement
         opened={catDrawerOpen}
         onClose={closeCatDrawer}
         onCategoryChange={() => {
-          miscInventoryService.getCategories().then(setCategories).catch(() => {});
+          Promise.all([
+            miscInventoryService.getCatalog(),
+            miscInventoryService.getCategories(),
+          ]).then(([cat, cats]) => { setCatalog(cat); setCategories(cats); }).catch(() => {});
         }}
       />
     </Stack>

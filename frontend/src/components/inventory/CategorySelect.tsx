@@ -22,7 +22,10 @@ export const CategorySelect = ({ categories, value, onChange, onCreateCategory }
   }, [selectedName]);
 
   const trimmed    = search.trim().toLowerCase();
-  const filtered   = categories.filter(c => c.name.toLowerCase().includes(trimmed));
+  const isUnchanged = trimmed === selectedName.toLowerCase();
+  const filtered   = isUnchanged
+    ? categories
+    : categories.filter(c => c.name.toLowerCase().includes(trimmed));
   const exactMatch = categories.some(c => c.name.toLowerCase() === trimmed);
 
   const options = filtered.map(c => (
@@ -30,6 +33,11 @@ export const CategorySelect = ({ categories, value, onChange, onCreateCategory }
   ));
 
   const handleSubmit = async (val: string) => {
+    if (val === '$add') {
+      setSearch('');
+      combobox.openDropdown();
+      return;
+    }
     if (val === '$create') {
       setCreating(true);
       try {
@@ -74,22 +82,16 @@ export const CategorySelect = ({ categories, value, onChange, onCreateCategory }
       </Combobox.Target>
       <Combobox.Dropdown>
         <Combobox.Options>
-          {value && (
-            <Combobox.Option value="$clear" style={{ color: 'var(--naja-teal)', fontSize: 13 }}>
-              ✕ Clear selection
-            </Combobox.Option>
-          )}
+
           {options}
-          {!exactMatch && search.trim().length > 0 && (
+          {!exactMatch && search.trim().length > 0 && !isUnchanged && (
             <Combobox.Option value="$create" style={{ color: 'var(--naja-gold)', fontSize: 13 }}>
               + Add "{search.trim()}"
             </Combobox.Option>
           )}
-          {options.length === 0 && search.trim().length === 0 && (
-            <Combobox.Empty style={{ color: 'var(--naja-teal)' }}>
-              Type to search or create a category
-            </Combobox.Empty>
-          )}
+          <Combobox.Option value="$add" style={{ color: 'var(--naja-teal)', fontSize: 13 }}>
+            + Add Category
+          </Combobox.Option>
         </Combobox.Options>
       </Combobox.Dropdown>
     </Combobox>

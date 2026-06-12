@@ -49,6 +49,29 @@ p {
   font-size: 18px;
 }
 
+.inventory-row:hover {
+  background-color: rgba(255, 255, 255, 0.07) !important;
+}
+
+.filter-btn {
+  background-color: var(--naja-sidebar) !important;
+  border: 1px solid rgba(204, 172, 49, 0.2) !important;
+  color: var(--naja-text) !important;
+  transition: border-color 0.15s ease !important;
+}
+.filter-btn:hover {
+  background-color: var(--naja-sidebar) !important;
+  border-color: rgba(204, 172, 49, 0.6) !important;
+}
+.filter-btn-active {
+  background-color: var(--naja-sidebar) !important;
+  border-color: rgba(204, 172, 49, 0.75) !important;
+  color: var(--naja-gold) !important;
+}
+.filter-btn-active:hover {
+  border-color: rgba(204, 172, 49, 1) !important;
+}
+
 @keyframes pulse {
   0%, 100% { opacity: 1; }
   50%       { opacity: 0.5; }

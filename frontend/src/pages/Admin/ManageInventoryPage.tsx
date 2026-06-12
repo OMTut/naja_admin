@@ -11,7 +11,7 @@ const ManageInventoryPage = () => (
   <Stack gap="lg">
     <h1 style={{ margin: 0 }}>Manage Inventory</h1>
     <Stack gap="xs">
-      <Text size="md" fw={700} c="#CCAC31" style={sectionLabel}>Miscellaneous Items</Text>
+      <Text>Manage the Items and Categories tracked for the Souli</Text>
       <MiscInventoryManagement />
     </Stack>
   </Stack>

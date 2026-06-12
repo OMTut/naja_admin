@@ -117,7 +117,7 @@ const InventoryCategoryManagement = ({ opened, onClose, onCategoryChange }: Prop
       onClose={() => { onClose(); onCategoryChange(); }}
       title={<Text fw={700} c="var(--naja-gold)" tt="uppercase" size="md" style={{ letterSpacing: '0.05em' }}>Manage Inventory Categories</Text>}
       position="right"
-      size="xl"
+      size="lg"
       styles={drawerStyles}
     >
       <Stack gap="lg" pt="xs">
@@ -162,6 +162,7 @@ const InventoryCategoryManagement = ({ opened, onClose, onCategoryChange }: Prop
                 key={cat.id}
                 px="sm"
                 py="xs"
+                className={editingId !== cat.id && deleteId !== cat.id ? 'inventory-row' : undefined}
                 style={{
                   backgroundColor: idx % 2 === 0
                     ? 'rgba(255,255,255,0.03)'
