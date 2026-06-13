@@ -1,6 +1,5 @@
 export interface UserRole {
   role_name: string;
-  grants_access: boolean;
 }
 
 export interface User {

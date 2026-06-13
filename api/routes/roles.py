@@ -10,27 +10,23 @@ import uuid
 from database.connection import get_db
 from database.models.role import Role
 from database.operations.users_roles import remove_role_from_all_users
-from dependencies.auth import require_session, require_roles
+from database.operations.permission_operations import get_role_permissions, set_role_permissions
+from dependencies.auth import require_session, require_permission
 
-ADMIN_ROLES = ("Role 1", "App Admin")
-
-router = APIRouter(dependencies=[Depends(require_roles(*ADMIN_ROLES))])
+router = APIRouter(dependencies=[Depends(require_permission("admin"))])
 
 
-# Pydantic models for request/response
 class RoleCreate(BaseModel):
     role_discord_id: Optional[str] = None
     role_name: str
     role_description: Optional[str] = None
-    grants_access: bool = False
-    grants_inventory: bool = False
+    permissions: List[str] = []
 
 
 class RoleUpdate(BaseModel):
     role_name: Optional[str] = None
     role_description: Optional[str] = None
-    grants_access: Optional[bool] = None
-    grants_inventory: Optional[bool] = None
+    permissions: Optional[List[str]] = None
 
 
 class RoleResponse(BaseModel):
@@ -38,69 +34,67 @@ class RoleResponse(BaseModel):
     role_discord_id: str
     role_name: str
     role_description: Optional[str]
-    grants_access: bool
-    grants_inventory: bool
+    permissions: List[str]
     created_at: datetime
     updated_at: datetime
 
-    class Config:
-        from_attributes = True
+
+def _role_dict(role: Role) -> dict:
+    return {
+        "role_id":          role.role_id,
+        "role_discord_id":  role.role_discord_id,
+        "role_name":        role.role_name,
+        "role_description": role.role_description,
+        "permissions":      get_role_permissions(role.role_id),
+        "created_at":       role.created_at,
+        "updated_at":       role.updated_at,
+    }
 
 
-# Role administration endpoints
 @router.get("/", response_model=List[RoleResponse])
 async def get_all_roles(db: Session = Depends(get_db), _=Depends(require_session)):
-    """Get all roles"""
     roles = db.query(Role).all()
-    return roles
+    return [_role_dict(r) for r in roles]
 
 
 @router.get("/{role_id}", response_model=RoleResponse)
 async def get_role(role_id: int, db: Session = Depends(get_db), _=Depends(require_session)):
-    """Get a specific role by ID"""
     role = db.query(Role).filter(Role.role_id == role_id).first()
     if not role:
         raise HTTPException(status_code=404, detail="Role not found")
-    return role
+    return _role_dict(role)
 
 
 @router.post("/", response_model=RoleResponse, status_code=201)
 async def create_role(role_data: RoleCreate, db: Session = Depends(get_db), _=Depends(require_session)):
-    """Create a new role"""
-    # Check if discord_id or name already exists
     existing = db.query(Role).filter(
         (Role.role_discord_id == role_data.role_discord_id) |
         (Role.role_name == role_data.role_name)
     ).first()
-    
     if existing:
-        raise HTTPException(
-            status_code=400,
-            detail="Role with this Discord ID or name already exists"
-        )
-    
+        raise HTTPException(status_code=400, detail="Role with this Discord ID or name already exists")
+
     new_role = Role(
         role_discord_id=role_data.role_discord_id or f"app-{uuid.uuid4().hex[:16]}",
         role_name=role_data.role_name,
         role_description=role_data.role_description,
-        grants_access=role_data.grants_access,
-        grants_inventory=role_data.grants_inventory,
     )
-    
     db.add(new_role)
     db.commit()
     db.refresh(new_role)
-    return new_role
+
+    if role_data.permissions:
+        set_role_permissions(new_role.role_id, role_data.permissions)
+
+    return _role_dict(new_role)
 
 
 @router.patch("/{role_id}", response_model=RoleResponse)
 async def update_role(role_id: int, role_data: RoleUpdate, db: Session = Depends(get_db), _=Depends(require_session)):
-    """Update an existing role"""
     role = db.query(Role).filter(Role.role_id == role_id).first()
     if not role:
         raise HTTPException(status_code=404, detail="Role not found")
-    
-    # Check for name conflicts if updating name
+
     if role_data.role_name is not None:
         existing = db.query(Role).filter(
             Role.role_name == role_data.role_name,
@@ -109,28 +103,25 @@ async def update_role(role_id: int, role_data: RoleUpdate, db: Session = Depends
         if existing:
             raise HTTPException(status_code=400, detail="Role name already exists")
         role.role_name = role_data.role_name
-    
+
     if role_data.role_description is not None:
         role.role_description = role_data.role_description
-    
-    if role_data.grants_access is not None:
-        role.grants_access = role_data.grants_access
-
-    if role_data.grants_inventory is not None:
-        role.grants_inventory = role_data.grants_inventory
 
     db.commit()
     db.refresh(role)
-    return role
+
+    if role_data.permissions is not None:
+        set_role_permissions(role_id, role_data.permissions)
+
+    return _role_dict(role)
 
 
 @router.delete("/{role_id}")
 async def delete_role(role_id: int, db: Session = Depends(get_db), _=Depends(require_session)):
-    """Delete a role"""
     role = db.query(Role).filter(Role.role_id == role_id).first()
     if not role:
         raise HTTPException(status_code=404, detail="Role not found")
-    
+
     remove_role_from_all_users(role_id)
     db.delete(role)
     db.commit()

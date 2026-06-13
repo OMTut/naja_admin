@@ -17,8 +17,9 @@ from database.operations.session_operations import invalidate_all_user_sessions
 from database.operations.session_operations import delete_all_user_sessions
 from database.models.user import UserStatus
 from services.sync_user_roles import get_user_current_roles, sync_user_roles_preserving_app
-from services.role_access import check_user_has_access_role
+from services.role_access import check_site_access
 from services.discord_api import get_user_roles_from_discord_api, get_all_guild_role_ids
+from database.operations.permission_operations import get_user_permissions
 
 router = APIRouter()
 
@@ -58,7 +59,7 @@ async def get_current_user(request: Request):
     db_user_discord_roles = [role['discord_id'] for role in db_user_roles]
 
     live_discord_roles = await get_user_roles_from_discord_api(user.discord_id)
-    has_access = check_user_has_access_role(live_discord_roles)
+    has_access = check_site_access(live_discord_roles)
 
     # sync if roles have changed, preserving app-only roles
     if set(db_user_discord_roles) != set(live_discord_roles):
@@ -87,7 +88,7 @@ async def get_current_user(request: Request):
             "server_nickname": user.server_nickname,
             "status": user.status.value,
             "roles": [r["name"] for r in db_user_roles],
-            "grants_inventory": any(r.get("grants_inventory", False) for r in db_user_roles),
+            "permissions": list(get_user_permissions(user.id)),
         }
     }
 

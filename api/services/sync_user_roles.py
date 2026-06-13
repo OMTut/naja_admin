@@ -150,13 +150,10 @@ def get_user_current_roles(user_id: int) -> list[dict]:
         # Use the operations layer function
         basic_roles = get_user_roles(user_id)
         
-        # Transform to the service layer format with enhanced field names
         return [
             {
-                "discord_id":       role["role_discord_id"],
-                "name":             role["role_name"],
-                "grants_access":    role["grants_access"],
-                "grants_inventory": role["grants_inventory"],
+                "discord_id": role["role_discord_id"],
+                "name":       role["role_name"],
             }
             for role in basic_roles
         ]

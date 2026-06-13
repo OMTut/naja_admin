@@ -34,7 +34,7 @@ const eventLabel = (e: MiscInventoryEvent) => {
 
 const MiscInventoryTable = () => {
   const { user } = useAuth();
-  const canManageInventory = user?.grants_inventory ?? false;
+  const canManageInventory = user?.permissions?.includes('inventory') ?? false;
 
   const [holdings,  setHoldings]  = useState<MiscInventoryEntry[]>([]);
   const [catalog,   setCatalog]   = useState<InventoryCatalogItem[]>([]);

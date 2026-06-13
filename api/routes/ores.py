@@ -10,10 +10,9 @@ from sqlalchemy.orm import Session
 
 from database.connection import get_db
 from database.models.ore import Ore
-from dependencies.auth import require_session, require_roles
+from dependencies.auth import require_session, require_permission
 from services.ore_sync import sync_ores
 
-ADMIN_ROLES = ("Role 1", "App Admin")
 
 router = APIRouter()
 
@@ -36,7 +35,7 @@ async def get_ores(db: Session = Depends(get_db), _=Depends(require_session)):
     return db.query(Ore).order_by(Ore.display_name).all()
 
 
-@router.post("/sync", dependencies=[Depends(require_roles(*ADMIN_ROLES))])
+@router.post("/sync", dependencies=[Depends(require_permission("admin"))])
 async def trigger_sync(db: Session = Depends(get_db), _=Depends(require_session)):
     """Pull latest ore catalog from SC_Data."""
     try:

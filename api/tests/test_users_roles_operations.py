@@ -42,7 +42,6 @@ class TestUsersRolesOperations:
             role_discord_id=str(fake.random_int(min=100000000000000000, max=999999999999999999))[:20],  # Max 20 chars
             role_name=fake.word().capitalize()[:32],  # Use single word, max 32 chars
             role_description=fake.text(max_nb_chars=255)[:255],  # Max 255 chars
-            grants_access=True
         )
         db_session.add(test_role)
         db_session.commit()
@@ -100,13 +99,11 @@ class TestUsersRolesOperations:
             role_discord_id=str(fake.random_int(min=100000000000000000, max=999999999999999999))[:20],
             role_name="Admin",  # Alphabetically first
             role_description=fake.text(max_nb_chars=100)[:255],
-            grants_access=True
         )
         role2 = Role(
             role_discord_id=str(fake.random_int(min=100000000000000000, max=999999999999999999))[:20],
             role_name="User",  # Alphabetically second
             role_description=fake.text(max_nb_chars=100)[:255],
-            grants_access=False
         )
         
         # Add roles to database
@@ -139,18 +136,14 @@ class TestUsersRolesOperations:
         # Verify the roles are ordered by role_name (Admin comes before User)
         assert user_roles[0]["role_name"] == "Admin"
         assert user_roles[0]["role_discord_id"] == role1_discord_id
-        assert user_roles[0]["grants_access"] == True
-        
+
         assert user_roles[1]["role_name"] == "User"
         assert user_roles[1]["role_discord_id"] == role2_discord_id
-        assert user_roles[1]["grants_access"] == False
-        
+
         # Verify the structure of returned dictionaries
         for role in user_roles:
             assert "role_discord_id" in role
             assert "role_name" in role
-            assert "grants_access" in role
-            assert isinstance(role["grants_access"], bool)
 
     def test_get_user_roles_no_roles(self, db_session, sample_user_data):
         """Test getting roles for a user who has no roles assigned"""
@@ -187,7 +180,6 @@ class TestUsersRolesOperations:
             role_discord_id=str(fake.random_int(min=100000000000000000, max=999999999999999999))[:20],
             role_name="Moderator",
             role_description="Test moderator role",
-            grants_access=True
         )
         
         db_session.add(test_role)
@@ -210,7 +202,6 @@ class TestUsersRolesOperations:
         assert len(user_roles) == 1
         assert user_roles[0]["role_name"] == "Moderator"
         assert user_roles[0]["role_discord_id"] == test_role_discord_id
-        assert user_roles[0]["grants_access"] == True
 
     #######################################
     # Test remove_user_role
@@ -228,7 +219,6 @@ class TestUsersRolesOperations:
             role_discord_id=str(fake.random_int(min=100000000000000000, max=999999999999999999))[:20],
             role_name="TestRole",
             role_description="Role to be removed",
-            grants_access=True
         )
         
         db_session.add(test_role)
@@ -274,7 +264,6 @@ class TestUsersRolesOperations:
             role_discord_id=str(fake.random_int(min=100000000000000000, max=999999999999999999))[:20],
             role_name="UnassignedRole",
             role_description="Role that user doesn't have",
-            grants_access=True
         )
         
         db_session.add(test_role)
@@ -326,13 +315,11 @@ class TestUsersRolesOperations:
             role_discord_id=str(fake.random_int(min=100000000000000000, max=999999999999999999))[:20],
             role_name="AdminRole",
             role_description="Admin role",
-            grants_access=True
         )
         role2 = Role(
             role_discord_id=str(fake.random_int(min=100000000000000000, max=999999999999999999))[:20],
             role_name="UserRole",
             role_description="User role",
-            grants_access=False
         )
         
         db_session.add_all([role1, role2])
@@ -381,19 +368,16 @@ class TestUsersRolesOperations:
             role_discord_id=str(fake.random_int(min=100000000000000000, max=999999999999999999))[:20],
             role_name="AdminRole",
             role_description="Admin role",
-            grants_access=True
         )
         role2 = Role(
             role_discord_id=str(fake.random_int(min=100000000000000000, max=999999999999999999))[:20],
             role_name="UserRole",
             role_description="User role",
-            grants_access=False
         )
         role3 = Role(
             role_discord_id=str(fake.random_int(min=100000000000000000, max=999999999999999999))[:20],
             role_name="ModeratorRole",
             role_description="Moderator role",
-            grants_access=True
         )
         
         db_session.add_all([role1, role2, role3])
@@ -481,7 +465,6 @@ class TestUsersRolesOperations:
             role_discord_id=str(fake.random_int(min=100000000000000000, max=999999999999999999))[:20],
             role_name="SingleRole",
             role_description="Only role for this test",
-            grants_access=True
         )
         
         db_session.add(test_role)
@@ -530,7 +513,6 @@ class TestUsersRolesOperations:
             role_discord_id=str(fake.random_int(min=100000000000000000, max=999999999999999999))[:20],
             role_name="SharedRole",
             role_description="Role shared by both users",
-            grants_access=True
         )
         
         db_session.add(test_role)
@@ -598,13 +580,11 @@ class TestUsersRolesOperations:
             role_discord_id=str(fake.random_int(min=100000000000000000, max=999999999999999999))[:20],
             role_name="RoleToRemove",
             role_description="This role will be removed from all users",
-            grants_access=True
         )
         other_role = Role(
             role_discord_id=str(fake.random_int(min=100000000000000000, max=999999999999999999))[:20],
             role_name="OtherRole",
             role_description="This role should remain",
-            grants_access=False
         )
         
         db_session.add_all([role_to_remove, other_role])
@@ -669,7 +649,6 @@ class TestUsersRolesOperations:
             role_discord_id=str(fake.random_int(min=100000000000000000, max=999999999999999999))[:20],
             role_name="UnassignedRole",
             role_description="This role is not assigned to anyone",
-            grants_access=True
         )
         
         db_session.add(unassigned_role)
@@ -717,7 +696,6 @@ class TestUsersRolesOperations:
             role_discord_id=str(fake.random_int(min=100000000000000000, max=999999999999999999))[:20],
             role_name="SingleUserRole",
             role_description="Role assigned to only one user",
-            grants_access=True
         )
         
         db_session.add(test_role)
@@ -772,19 +750,16 @@ class TestUsersRolesOperations:
             role_discord_id=str(fake.random_int(min=100000000000000000, max=999999999999999999))[:20],
             role_name="AdminRole",
             role_description="Admin role to be removed",
-            grants_access=True
         )
         role_to_keep1 = Role(
             role_discord_id=str(fake.random_int(min=100000000000000000, max=999999999999999999))[:20],
             role_name="UserRole",
             role_description="User role to keep",
-            grants_access=False
         )
         role_to_keep2 = Role(
             role_discord_id=str(fake.random_int(min=100000000000000000, max=999999999999999999))[:20],
             role_name="ModeratorRole",
             role_description="Moderator role to keep",
-            grants_access=True
         )
         
         db_session.add_all([role_to_remove, role_to_keep1, role_to_keep2])
@@ -866,19 +841,16 @@ class TestUsersRolesOperations:
             role_discord_id=discord_id1,
             role_name="AdminRole",
             role_description="Administrator role",
-            grants_access=True
         )
         role2 = Role(
             role_discord_id=discord_id2,
             role_name="UserRole",
             role_description="Basic user role",
-            grants_access=False
         )
         role3 = Role(
             role_discord_id=discord_id3,
             role_name="ModeratorRole",
             role_description="Moderator role",
-            grants_access=True
         )
         
         db_session.add_all([role1, role2, role3])
@@ -894,22 +866,18 @@ class TestUsersRolesOperations:
         # Verify first role (AdminRole - alphabetically first)
         assert result[0]["role_discord_id"] == discord_id1
         assert result[0]["role_name"] == "AdminRole"
-        assert result[0]["grants_access"] == True
         assert result[0]["role_description"] == "Administrator role"
-        
+
         # Verify second role (ModeratorRole)
         assert result[1]["role_discord_id"] == discord_id3
         assert result[1]["role_name"] == "ModeratorRole"
-        assert result[1]["grants_access"] == True
         assert result[1]["role_description"] == "Moderator role"
-        
+
         # Verify structure of returned dictionaries
         for role in result:
             assert "role_discord_id" in role
             assert "role_name" in role
-            assert "grants_access" in role
             assert "role_description" in role
-            assert isinstance(role["grants_access"], bool)
 
     def test_get_roles_by_discord_ids_empty_list(self, db_session):
         """Test getting roles with an empty Discord IDs list"""
@@ -944,7 +912,6 @@ class TestUsersRolesOperations:
             role_discord_id=existing_discord_id,
             role_name="ExistingRole",
             role_description="This role exists",
-            grants_access=True
         )
         
         db_session.add(test_role)
@@ -960,7 +927,6 @@ class TestUsersRolesOperations:
         assert len(result) == 1
         assert result[0]["role_discord_id"] == existing_discord_id
         assert result[0]["role_name"] == "ExistingRole"
-        assert result[0]["grants_access"] == True
         assert result[0]["role_description"] == "This role exists"
 
     def test_get_roles_by_discord_ids_single_role(self, db_session):
@@ -973,7 +939,6 @@ class TestUsersRolesOperations:
             role_discord_id=discord_id,
             role_name="SingleRole",
             role_description="Only role in this test",
-            grants_access=False
         )
         
         db_session.add(test_role)
@@ -985,7 +950,6 @@ class TestUsersRolesOperations:
         assert len(result) == 1
         assert result[0]["role_discord_id"] == discord_id
         assert result[0]["role_name"] == "SingleRole"
-        assert result[0]["grants_access"] == False
         assert result[0]["role_description"] == "Only role in this test"
 
     def test_get_roles_by_discord_ids_ordering(self, db_session):
@@ -1003,25 +967,21 @@ class TestUsersRolesOperations:
                 role_discord_id=discord_ids[0],
                 role_name="ZebraRole",  # Last alphabetically
                 role_description="Z role",
-                grants_access=True
             ),
             Role(
                 role_discord_id=discord_ids[1],
                 role_name="AlphaRole",  # First alphabetically
                 role_description="A role",
-                grants_access=False
             ),
             Role(
                 role_discord_id=discord_ids[2],
                 role_name="BetaRole",   # Second alphabetically
                 role_description="B role",
-                grants_access=True
             ),
             Role(
                 role_discord_id=discord_ids[3],
                 role_name="GammaRole", # Third alphabetically
                 role_description="G role",
-                grants_access=False
             )
         ]
         
@@ -1047,7 +1007,6 @@ class TestUsersRolesOperations:
             role_discord_id=discord_id,
             role_name="DuplicateTestRole",
             role_description="Role for duplicate ID testing",
-            grants_access=True
         )
         
         db_session.add(test_role)

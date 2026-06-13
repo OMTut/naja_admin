@@ -13,10 +13,9 @@ from sqlalchemy.orm import Session
 from database.connection import get_db
 from database.models.inventory import ResourceInventory
 from database.models.user import User
-from database.operations.users_roles import get_user_roles
 from dependencies.auth import require_session
+from services.role_access import check_user_has_permission
 
-ADMIN_ROLES = {"Role 1", "App Admin"}
 
 router = APIRouter()
 
@@ -24,8 +23,7 @@ router = APIRouter()
 # ── Helpers ───────────────────────────────────────────────────────────────────
 
 def _is_admin(user: User) -> bool:
-    roles = {r["role_name"] for r in get_user_roles(user.id)}
-    return bool(roles & ADMIN_ROLES)
+    return check_user_has_permission(user.id, "admin")
 
 
 def _user_display(user: Optional[User]) -> Optional[dict]:

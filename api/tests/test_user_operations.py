@@ -179,7 +179,6 @@ def test_discord_oauth_detects_user_changes(db_session, sample_user_data):
         role_discord_id="fake_role_id",
         role_name="Access Role",
         role_description="Test role that grants access",
-        grants_access=True
     )
     db_session.add(access_role)
     db_session.commit()

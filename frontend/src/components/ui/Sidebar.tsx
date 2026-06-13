@@ -8,6 +8,7 @@ import {
   IconPackage,
   IconDiamond,
   IconBriefcase,
+  IconShieldLock,
 } from '@tabler/icons-react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useState, useEffect } from 'react';
@@ -21,7 +22,7 @@ interface NavItem {
   path: string;
   label: string;
   icon: React.FC<{ size?: number; stroke?: number }>;
-  requiredRoles?: string[];
+  requiredPermission?: string;
   showOnlyUnder?: string;
 }
 
@@ -31,10 +32,11 @@ const navItems: NavItem[] = [
   { path: '/inventory',           label: 'Inventory',        icon: IconPackage },
   { path: '/inventory/resources', label: 'Resources',        icon: IconDiamond,   showOnlyUnder: '/inventory' },
   { path: '/inventory/misc',      label: 'Misc. Items',      icon: IconBriefcase, showOnlyUnder: '/inventory' },
-  { path: '/admin',         label: 'Admin Dashboard', icon: IconLayoutDashboard,  requiredRoles: ['Role 1', 'App Admin'] },
-  { path: '/admin/users',     label: 'User Management',     icon: IconUsers,     requiredRoles: ['Role 1', 'App Admin'], showOnlyUnder: '/admin' },
-  { path: '/admin/roles',     label: 'Role Management',     icon: IconKey,       requiredRoles: ['Role 1', 'App Admin'], showOnlyUnder: '/admin' },
-  { path: '/admin/inventory', label: 'Manage Inventory',    icon: IconPackage,   requiredRoles: ['Role 1', 'App Admin'], showOnlyUnder: '/admin' },
+  { path: '/admin',         label: 'Admin Dashboard', icon: IconLayoutDashboard,  requiredPermission: 'admin' },
+  { path: '/admin/users',     label: 'User Management',     icon: IconUsers,     requiredPermission: 'admin', showOnlyUnder: '/admin' },
+  { path: '/admin/roles',     label: 'Role Management',     icon: IconKey,       requiredPermission: 'admin', showOnlyUnder: '/admin' },
+  { path: '/admin/inventory',    label: 'Manage Inventory',    icon: IconPackage,    requiredPermission: 'admin', showOnlyUnder: '/admin' },
+  { path: '/admin/permissions',  label: 'Permissions',         icon: IconShieldLock, requiredPermission: 'admin', showOnlyUnder: '/admin' },
 ];
 
 interface NavIconProps {
@@ -95,7 +97,7 @@ const Sidebar = ({ onNavigate }: SidebarProps) => {
   const navigate = useNavigate();
   const location = useLocation();
   const { user } = useAuth();
-  const userRoles = user?.roles ?? [];
+  const userPermissions = user?.permissions ?? [];
   const [gibbsOnline, setGibbsOnline] = useState<boolean | null>(null);
 
   useEffect(() => {
@@ -125,7 +127,7 @@ const Sidebar = ({ onNavigate }: SidebarProps) => {
     <Box style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', height: '100%', paddingTop: '16px' }}>
       <Stack gap="xs" align="center" style={{ flex: 1 }}>
         {navItems
-          .filter(item => !item.requiredRoles || item.requiredRoles.some(r => userRoles.includes(r)))
+          .filter(item => !item.requiredPermission || userPermissions.includes(item.requiredPermission))
           .filter(item => !item.showOnlyUnder || location.pathname.startsWith(item.showOnlyUnder))
           .map((item) => (
             <NavIcon

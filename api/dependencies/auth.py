@@ -4,12 +4,12 @@ Shared FastAPI dependencies for authentication.
 from fastapi import Request, HTTPException, Depends
 from routes.auth.session import get_session, is_session_valid
 from database.operations.session_operations import get_user_from_session
-from database.operations.users_roles import get_user_roles
+from services.role_access import check_user_has_permission
 
 
 def require_session(request: Request):
     """
-    FastAPI dependency — validates the session cookie and returns the user.
+    Validates the session cookie and returns the user.
     Raises 401 if the session is missing, expired, or invalid.
     """
     session_id = request.cookies.get("session_id")
@@ -27,17 +27,15 @@ def require_session(request: Request):
     return user
 
 
-def require_roles(*roles: str):
+def require_permission(permission: str):
     """
-    FastAPI dependency factory — requires the user to have at least one of the
-    specified role names in addition to a valid session.
+    Dependency factory — requires the user to have a specific permission.
 
     Usage:
-        @router.get("/admin/thing", dependencies=[Depends(require_roles("Role 1", "App Admin"))])
+        @router.get("/admin/thing", dependencies=[Depends(require_permission("admin"))])
     """
     def dependency(user=Depends(require_session)):
-        user_roles = {r["role_name"] for r in get_user_roles(user.id)}
-        if not user_roles.intersection(roles):
+        if not check_user_has_permission(user.id, permission):
             raise HTTPException(status_code=403, detail="Insufficient permissions")
         return user
     return dependency

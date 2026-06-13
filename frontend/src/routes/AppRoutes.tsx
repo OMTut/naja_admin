@@ -4,6 +4,7 @@ import HomePage from "../pages/HomePage";
 import HomePageAdmin from "../pages/Admin/HomePageAdmin";
 import RolesPage from "../pages/Admin/RolesPage";
 import UsersPage from "../pages/Admin/UsersPage";
+import PermissionsPage from "../pages/Admin/PermissionsPage";
 import BlueprintsPage from "../pages/BlueprintsPage";
 import InventoryPage from "../pages/InventoryPage";
 import ManageInventoryPage from "../pages/Admin/ManageInventoryPage";
@@ -14,8 +15,6 @@ import ProfilePage from "../pages/ProfilePage";
 import ProtectedRoute from "../components/auth/ProtectedRoute";
 import PublicRoute from "../components/auth/PublicRoute";
 import Layout from "../components/layout/Layout";
-
-const ADMIN_ROLES = ["Role 1", "App Admin"];
 
 const AppRoutes = () => (
     <Router>
@@ -31,9 +30,19 @@ const AppRoutes = () => (
                 }
             />
             <Route
+                path="/admin"
+                element={
+                    <ProtectedRoute requiredPermission="admin">
+                        <Layout>
+                            <HomePageAdmin />
+                        </Layout>
+                    </ProtectedRoute>
+                }
+            />
+            <Route
                 path="/admin/roles"
                 element={
-                    <ProtectedRoute requiredRoles={ADMIN_ROLES}>
+                    <ProtectedRoute requiredPermission="admin">
                         <Layout>
                             <RolesPage />
                         </Layout>
@@ -43,7 +52,7 @@ const AppRoutes = () => (
             <Route
                 path="/admin/users"
                 element={
-                    <ProtectedRoute requiredRoles={ADMIN_ROLES}>
+                    <ProtectedRoute requiredPermission="admin">
                         <Layout>
                             <UsersPage />
                         </Layout>
@@ -51,11 +60,11 @@ const AppRoutes = () => (
                 }
             />
             <Route
-                path="/admin"
+                path="/admin/permissions"
                 element={
-                    <ProtectedRoute requiredRoles={ADMIN_ROLES}>
+                    <ProtectedRoute requiredPermission="admin">
                         <Layout>
-                            <HomePageAdmin />
+                            <PermissionsPage />
                         </Layout>
                     </ProtectedRoute>
                 }
@@ -63,7 +72,7 @@ const AppRoutes = () => (
             <Route
                 path="/admin/inventory"
                 element={
-                    <ProtectedRoute requiredRoles={ADMIN_ROLES}>
+                    <ProtectedRoute requiredPermission="admin">
                         <Layout>
                             <ManageInventoryPage />
                         </Layout>
@@ -83,7 +92,7 @@ const AppRoutes = () => (
             <Route
                 path="/admin/users/:userId"
                 element={
-                    <ProtectedRoute requiredRoles={ADMIN_ROLES}>
+                    <ProtectedRoute requiredPermission="admin">
                         <Layout>
                             <ProfilePage />
                         </Layout>

@@ -208,7 +208,7 @@ const InventoryCategoryManagement = ({ opened, onClose, onCategoryChange }: Prop
                     )}
                     {deleteError && <Text size="md" c="red">{deleteError}</Text>}
                     <Group gap="100px">
-                      <Button size="compact-md" variant="outline" color="red" onClick={() => handleDelete(cat.id)} loading={deleteSubmit}>
+                      <Button size="compact-md" variant="default" className="delete-btn" onClick={() => handleDelete(cat.id)} loading={deleteSubmit}>
                         Confirm
                       </Button>
                       <Button size="compact-md" variant="outline" color="gray" onClick={cancelDelete} disabled={deleteSubmit} autoFocus>

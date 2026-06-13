@@ -17,19 +17,18 @@ def get_user_roles(user_id: int) -> list[dict]:
     db: DBSession = SessionLocal()
     try:
         query = text("""
-            SELECT r.role_discord_id, r.role_name, r.grants_access, r.grants_inventory FROM roles r
+            SELECT r.role_discord_id, r.role_name, r.role_id FROM roles r
             JOIN users_roles ur ON r.role_id = ur.role_id
             WHERE ur.user_id = :user_id
-            Order BY r.role_name
+            ORDER BY r.role_name
         """)
         result = db.execute(query, {"user_id": user_id})
         rows = result.fetchall()
         return [
             {
-                "role_discord_id":   row[0],
-                "role_name":         row[1],
-                "grants_access":     row[2],
-                "grants_inventory":  row[3],
+                "role_discord_id": row[0],
+                "role_name":       row[1],
+                "role_id":         row[2],
             }
             for row in rows
         ]
@@ -157,24 +156,22 @@ def get_roles_by_discord_ids(discord_role_ids: list[str]) -> list[dict]:
         placeholders = ','.join(':role_id_' + str(i) for i in range(len(discord_role_ids)))
         
         query = text(f"""
-            SELECT r.role_discord_id, r.role_name, r.grants_access, r.role_description 
+            SELECT r.role_discord_id, r.role_name, r.role_description
             FROM roles r
             WHERE r.role_discord_id IN ({placeholders})
-            ORDER BY r.role_name 
+            ORDER BY r.role_name
         """)
-        
-        # Create parameters dictionary
+
         params = {'role_id_' + str(i): discord_role_ids[i] for i in range(len(discord_role_ids))}
-        
+
         result = db.execute(query, params)
         rows = result.fetchall()
-        
+
         return [
             {
-                "role_discord_id": row[0],
-                "role_name": row[1],
-                "grants_access": row[2],
-                "role_description": row[3]
+                "role_discord_id":  row[0],
+                "role_name":        row[1],
+                "role_description": row[2],
             }
             for row in rows
         ]

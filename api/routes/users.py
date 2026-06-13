@@ -14,11 +14,9 @@ from database.operations.users_roles import get_user_roles, clear_user_roles, ad
 from services.sync_user_roles import sync_user_roles_preserving_app
 from services.discord_api import get_member_profile, get_all_guild_role_ids
 from database.models.role import Role as RoleModel
-from dependencies.auth import require_session, require_roles
+from dependencies.auth import require_session, require_permission
 
-ADMIN_ROLES = ("Role 1", "App Admin")
-
-router = APIRouter(dependencies=[Depends(require_roles(*ADMIN_ROLES))])
+router = APIRouter(dependencies=[Depends(require_permission("admin"))])
 
 
 # Pydantic models for request/response
@@ -31,7 +29,6 @@ class UserUpdate(BaseModel):
 
 class UserRoleInfo(BaseModel):
     role_name: str
-    grants_access: bool
 
 
 class UserResponse(BaseModel):
@@ -68,7 +65,7 @@ async def get_all_users(db: Session = Depends(get_db), _=Depends(require_session
             "server_nickname": user.server_nickname,
             "email": user.email,
             "status": user.status.value,
-            "roles": [{"role_name": r["role_name"], "grants_access": r["grants_access"]} for r in roles],
+            "roles": [{"role_name": r["role_name"]} for r in roles],
             "created_at": user.created_at,
             "updated_at": user.updated_at,
             "last_login_at": user.last_login_at,
@@ -93,7 +90,7 @@ async def get_user(user_id: int, db: Session = Depends(get_db), _=Depends(requir
         "server_nickname": user.server_nickname,
         "email": user.email,
         "status": user.status.value,
-        "roles": [{"role_name": r["role_name"], "grants_access": r["grants_access"]} for r in roles],
+        "roles": [{"role_name": r["role_name"]} for r in roles],
         "created_at": user.created_at,
         "updated_at": user.updated_at,
         "last_login_at": user.last_login_at,
@@ -137,7 +134,7 @@ async def update_user(user_id: int, user_data: UserUpdate, db: Session = Depends
         "server_nickname": user.server_nickname,
         "email": user.email,
         "status": user.status.value,
-        "roles": [{"role_name": r["role_name"], "grants_access": r["grants_access"]} for r in roles],
+        "roles": [{"role_name": r["role_name"]} for r in roles],
         "created_at": user.created_at,
         "updated_at": user.updated_at,
         "last_login_at": user.last_login_at,
@@ -175,7 +172,7 @@ async def set_user_roles(user_id: int, role_ids: List[int], db: Session = Depend
 
     roles = get_user_roles(user_id)
     return {
-        "roles": [{"role_name": r["role_name"], "grants_access": r["grants_access"]} for r in roles],
+        "roles": [{"role_name": r["role_name"]} for r in roles],
         "warning": warning,
     }
 
@@ -274,7 +271,7 @@ async def resync_user(user_id: int, db: Session = Depends(get_db), _=Depends(req
         "discord_username": user.discord_username,
         "global_name": user.global_name,
         "server_nickname": user.server_nickname,
-        "roles": [{"role_name": r["role_name"], "grants_access": r["grants_access"]} for r in roles],
+        "roles": [{"role_name": r["role_name"]} for r in roles],
     }
 
 

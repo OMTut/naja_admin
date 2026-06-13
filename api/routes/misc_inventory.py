@@ -29,10 +29,9 @@ from sqlalchemy.orm import Session
 from database.connection import get_db
 from database.models.misc_inventory import InventoryCatalog, MiscCategory, MiscInventory, MiscInventoryEvent
 from database.models.user import User
-from database.operations.users_roles import get_user_roles
 from dependencies.auth import require_session
+from services.role_access import check_user_has_permission
 
-ADMIN_ROLES = {"Role 1", "App Admin"}
 
 router = APIRouter()
 
@@ -40,13 +39,8 @@ router = APIRouter()
 # ── Helpers ───────────────────────────────────────────────────────────────────
 
 def _is_admin(user: User) -> bool:
-    roles = {r["role_name"] for r in get_user_roles(user.id)}
-    return bool(roles & ADMIN_ROLES)
+    return check_user_has_permission(user.id, "admin")
 
-
-def _can_manage_inventory(user: User) -> bool:
-    """True if the user has any role with grants_inventory=True."""
-    return any(r.get("grants_inventory", False) for r in get_user_roles(user.id))
 
 
 def _user_display(user: Optional[User]) -> Optional[dict]:
@@ -72,12 +66,13 @@ def _category_display(cat: Optional[MiscCategory]) -> Optional[dict]:
 
 
 def _get_inventory_manager_ids(db: Session) -> set[int]:
-    """Return the set of user IDs that hold at least one grants_inventory role."""
+    """Return the set of user IDs that hold the inventory permission."""
     rows = db.execute(text("""
         SELECT DISTINCT ur.user_id
         FROM users_roles ur
-        JOIN roles r ON ur.role_id = r.role_id
-        WHERE r.grants_inventory = true
+        JOIN roles_permissions rp ON ur.role_id = rp.role_id
+        JOIN permissions p ON rp.permission_id = p.permission_id
+        WHERE p.permission_name = 'inventory'
     """)).fetchall()
     return {row[0] for row in rows}
 
@@ -383,7 +378,7 @@ async def update_holding_location(
     holding = db.get(MiscInventory, holding_id)
     if not holding:
         raise HTTPException(status_code=404, detail="Holding not found.")
-    if holding.held_by != current_user.id and not _can_manage_inventory(current_user):
+    if holding.held_by != current_user.id and not check_user_has_permission(current_user.id, "inventory"):
         raise HTTPException(status_code=403, detail="Insufficient permissions.")
     if body.location is not None:
         holding.location    = body.location
@@ -403,7 +398,7 @@ async def transfer_holding(
     holding = db.get(MiscInventory, holding_id)
     if not holding:
         raise HTTPException(status_code=404, detail="Holding not found.")
-    if holding.held_by != current_user.id and not _can_manage_inventory(current_user):
+    if holding.held_by != current_user.id and not check_user_has_permission(current_user.id, "inventory"):
         raise HTTPException(status_code=403, detail="Only the current holder or an inventory manager can transfer.")
     if body.quantity < 1 or body.quantity > holding.quantity:
         raise HTTPException(status_code=400, detail=f"Quantity must be between 1 and {holding.quantity}.")
@@ -437,7 +432,7 @@ async def consume_holding(
     holding = db.get(MiscInventory, holding_id)
     if not holding:
         raise HTTPException(status_code=404, detail="Holding not found.")
-    if holding.held_by != current_user.id and not _can_manage_inventory(current_user):
+    if holding.held_by != current_user.id and not check_user_has_permission(current_user.id, "inventory"):
         raise HTTPException(status_code=403, detail="Only the current holder or an inventory manager can consume.")
     if body.quantity < 1 or body.quantity > holding.quantity:
         raise HTTPException(status_code=400, detail=f"Quantity must be between 1 and {holding.quantity}.")
@@ -479,7 +474,7 @@ async def delete_holding(
     holding = db.get(MiscInventory, holding_id)
     if not holding:
         raise HTTPException(status_code=404, detail="Holding not found.")
-    if holding.held_by != current_user.id and not _can_manage_inventory(current_user):
+    if holding.held_by != current_user.id and not check_user_has_permission(current_user.id, "inventory"):
         raise HTTPException(status_code=403, detail="Insufficient permissions.")
     db.delete(holding)
     db.commit()

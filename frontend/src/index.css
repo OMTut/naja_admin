@@ -72,6 +72,17 @@ p {
   border-color: rgba(204, 172, 49, 1) !important;
 }
 
+.delete-btn {
+  background-color: var(--naja-sidebar) !important;
+  border: 1px solid rgba(255, 107, 107, 0.3) !important;
+  color: #ff6b6b !important;
+  transition: border-color 0.15s ease !important;
+}
+.delete-btn:hover {
+  background-color: var(--naja-sidebar) !important;
+  border-color: rgba(255, 107, 107, 0.7) !important;
+}
+
 @keyframes pulse {
   0%, 100% { opacity: 1; }
   50%       { opacity: 0.5; }

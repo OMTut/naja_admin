@@ -11,9 +11,7 @@ from sqlalchemy.orm import Session
 from database.connection import get_db
 from database.models.blueprint import Blueprint, BlueprintIngredient, ItemCategory, UserBlueprint
 from database.models.user import User
-from dependencies.auth import require_session, require_roles
-
-ADMIN_ROLES = ("Role 1", "App Admin")
+from dependencies.auth import require_session, require_permission
 from services.blueprint_sync import sync_blueprints
 
 router = APIRouter()
@@ -108,7 +106,7 @@ async def get_categories(db: Session = Depends(get_db), _=Depends(require_sessio
     )
 
 
-@router.get("/org", response_model=List[OrgBlueprintResponse], dependencies=[Depends(require_roles(*ADMIN_ROLES))])
+@router.get("/org", response_model=List[OrgBlueprintResponse], dependencies=[Depends(require_permission("admin"))])
 async def get_org_blueprints(db: Session = Depends(get_db), _=Depends(require_session)):
     """All blueprints owned by at least one org member, with owner list."""
     rows = (
@@ -153,7 +151,7 @@ async def get_org_blueprints(db: Session = Depends(get_db), _=Depends(require_se
     return results
 
 
-@router.post("/sync", dependencies=[Depends(require_roles(*ADMIN_ROLES))])
+@router.post("/sync", dependencies=[Depends(require_permission("admin"))])
 async def trigger_sync(db: Session = Depends(get_db), _=Depends(require_session)):
     """Pull latest blueprint catalog from SC_Data."""
     try:

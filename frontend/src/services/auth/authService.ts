@@ -7,7 +7,7 @@ export interface SessionResponse {
     discord_avatar: string;
     status: string;
     roles: string[];
-    grants_inventory: boolean;
+    permissions: string[];
   };
 }
 

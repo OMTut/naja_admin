@@ -1,168 +1,169 @@
-from sqlalchemy.orm import Session as DBSession
+from sqlalchemy import text
 from sqlalchemy.exc import IntegrityError
 from typing import Optional
-from datetime import datetime, timedelta
-
-from ..models.permission import Permission
 from ..connection import SessionLocal
 
-####################################
-# getPermissionIdByName
-# Params: permission_name: str
-# Give it a permission name and it returns the permission id if it exists
-####################################
-def getPermissionIdByName(permission_name: str) -> Optional[int]:
-    db: DBSession = SessionLocal()
-    try:
-        permission = db.querry(Permission).filter(Permission.permission_name == permission_name).first()
-        return permission.permission_id if permission else None
-    except Exception as e:
-        db.rollback()
-        print(f"Error getting Permission by name: {e}")
-        return None
-    finally:
-        db.close()
 
-#####################################
-# getPermissionById
-# Params: permission_id: int
-# Returns a permission when given a permission id
-#####################################
-def getPermissionById(permission_id: int) -> Optional[Permission]:
-    db: DBSession = SessionLocal()
+def get_all_permissions() -> list[dict]:
+    db = SessionLocal()
     try:
-        permission = db.query(Permission).filter(Permission.permission_id == permission_id).first()
-        return permission
+        rows = db.execute(text("""
+            SELECT permission_id, permission_name, permission_description
+            FROM permissions
+            ORDER BY permission_name
+        """)).fetchall()
+        return [{"id": r[0], "name": r[1], "description": r[2]} for r in rows]
     except Exception as e:
-        db.rollback()
-        print(f"Error getting Permission by id: {e}")
-        return None
-    finally:
-        db.close()
-
-#####################################
-# getPermissionByName
-# Params: permission_name: str
-# Returns a Permission when given a permission name
-#####################################
-def getPermissionByName(permission_name: str) -> Optional[Permission]:
-    db: DBSession = SessionLocal()
-    try:
-        permission = db.query(Permission).filter(Permission.permission_name == permission_name).first()
-        return permission if permission else None
-    except Exception as e:
-        db.rollback()
-        print(f"Error getting Permission by name: {e}")
-        return None
+        print(f"Error getting permissions: {e}")
+        return []
     finally:
         db.close()
 
 
-#####################################
-# getAllPermissions
-# Get all the Permissions from the db
-#####################################
-def getAllPermissions() -> list[Permission]:
-    db: DBSession = SessionLocal()
+def get_role_permissions(role_id: int) -> list[str]:
+    """Return permission names assigned to a role."""
+    db = SessionLocal()
     try:
-        permissions = db.query(Permission).all()
-        return permissions
+        rows = db.execute(text("""
+            SELECT p.permission_name
+            FROM permissions p
+            JOIN roles_permissions rp ON p.permission_id = rp.permission_id
+            WHERE rp.role_id = :role_id
+            ORDER BY p.permission_name
+        """), {"role_id": role_id}).fetchall()
+        return [r[0] for r in rows]
     except Exception as e:
-        print(f"Error getting all Permissions: {e}")
-        return None
+        print(f"Error getting role permissions: {e}")
+        return []
     finally:
         db.close()
 
-#####################################
-# store_permission
-# Params: permission_data: dict
-#         permission_name: str
-#         permission_description: str
-# Stores a new permission in the database.
-# Note: permission_data is the dictionary containing permission details.
-#####################################
-def store_permission(permission_data: dict) -> Optional[Permission]:
-    
-    # create db session
-    db: DBSession = SessionLocal()
 
+def set_role_permissions(role_id: int, permission_names: list[str]) -> bool:
+    """Replace all permissions for a role."""
+    db = SessionLocal()
     try:
-        permission = Permission(
-            permission_name = permission_data.get('permission_name'),
-            permission_description = permission_data.get('permission_description')
-        )
-        db.add(permission)
+        db.execute(text("DELETE FROM roles_permissions WHERE role_id = :role_id"), {"role_id": role_id})
+        if permission_names:
+            db.execute(text("""
+                INSERT INTO roles_permissions (role_id, permission_id)
+                SELECT :role_id, p.permission_id
+                FROM permissions p
+                WHERE p.permission_name = ANY(:names)
+            """), {"role_id": role_id, "names": permission_names})
         db.commit()
-        db.refresh(permission)
-        return permission
-    except IntegrityError as e:
-        db.rollback()
-        print(f"Integrity error storing permission: {e.orig}")
-        return None
+        return True
     except Exception as e:
-        db.rollback
-        print(f"Error storing persmission: {e}")
-
-    finally:
-        db.close()
-
-####################################
-# delete_permission_by_id
-# Params: permission_id: int
-# Deletes the Permission that matches the given permission id
-####################################
-def delete_permission_by_id(permission_id: int) -> bool:
-    db: DBSession = SessionLocal()
-    try:
-        permission = db.query(Permission).filter(Permission.permission_id == permission_id).first()
-        if permission:
-            db.delete(permission)
-            db.commit()
-            return True
+        db.rollback()
+        print(f"Error setting role permissions: {e}")
         return False
+    finally:
+        db.close()
+
+
+def get_user_permissions(user_id: int) -> set[str]:
+    """Return all permission names a user has via their roles."""
+    db = SessionLocal()
+    try:
+        rows = db.execute(text("""
+            SELECT DISTINCT p.permission_name
+            FROM permissions p
+            JOIN roles_permissions rp ON p.permission_id = rp.permission_id
+            JOIN users_roles ur ON rp.role_id = ur.role_id
+            WHERE ur.user_id = :user_id
+        """), {"user_id": user_id}).fetchall()
+        return {r[0] for r in rows}
+    except Exception as e:
+        print(f"Error getting user permissions: {e}")
+        return set()
+    finally:
+        db.close()
+
+
+def create_permission(name: str, description: str | None = None) -> dict | None:
+    db = SessionLocal()
+    try:
+        result = db.execute(text("""
+            INSERT INTO permissions (permission_name, permission_description)
+            VALUES (:name, :description)
+            RETURNING permission_id, permission_name, permission_description
+        """), {"name": name, "description": description}).fetchone()
+        db.commit()
+        return {"id": result[0], "name": result[1], "description": result[2]}
     except Exception as e:
         db.rollback()
-        print(f"Error deleting Permission by id: {e}")
+        print(f"Error creating permission: {e}")
         return None
     finally:
         db.close()
 
-######################################
-# update_permission
-# Params: permission_id: int, permission_data: dict
-# Updates an existing permission in the database
-#####################################
-def update_permission(permission_id: int, permission_data: dict) -> Optional[Permission]:
-    db: DBSession = SessionLocal()
+
+def update_permission(permission_id: int, name: str | None = None, description: str | None = None) -> dict | None:
+    db = SessionLocal()
     try:
-        permission = db.query(Permission).filter(Permission.permission_id == permission_id).first()
-        if permission:
-            for key, value in permission_data.items():
-                setattr(permission, key, value)
-            db.commit()
-            db.refresh(permission)
-            return permission
-        return None
+        fields = []
+        params: dict = {"id": permission_id}
+        if name is not None:
+            fields.append("permission_name = :name")
+            params["name"] = name
+        if description is not None:
+            fields.append("permission_description = :description")
+            params["description"] = description
+        if not fields:
+            return None
+        result = db.execute(text(f"""
+            UPDATE permissions SET {', '.join(fields)}
+            WHERE permission_id = :id
+            RETURNING permission_id, permission_name, permission_description
+        """), params).fetchone()
+        db.commit()
+        if not result:
+            return None
+        return {"id": result[0], "name": result[1], "description": result[2]}
     except Exception as e:
         db.rollback()
-        print(f"Error updating Permission: {e}")
+        print(f"Error updating permission: {e}")
         return None
     finally:
         db.close()
 
-######################################
-# permission_exists
-# Params: permission_name: str
-# Returns: bool
-# Checks if a permission exists in the database by its name
-######################################
-def permission_exists(permission_name: str) -> bool:
-    db: DBSession = SessionLocal()
+
+def delete_permission(permission_id: int) -> bool:
+    db = SessionLocal()
     try:
-        permission = db.query(Permission).filter(Permission.permission_name == permission_name).first()
-        return permission is not None
+        rowcount = db.execute(text(
+            "DELETE FROM permissions WHERE permission_id = :id"
+        ), {"id": permission_id}).rowcount
+        db.commit()
+        return rowcount > 0
     except Exception as e:
-        print(f"Error occurred: {e}")
+        db.rollback()
+        print(f"Error deleting permission: {e}")
+        return False
+    finally:
+        db.close()
+
+
+def discord_roles_have_permission(discord_role_ids: list[str], permission: str) -> bool:
+    """Check if any of the given Discord role IDs carry a specific permission.
+    Used during login before the user's DB roles are guaranteed to be synced."""
+    if not discord_role_ids:
+        return False
+    db = SessionLocal()
+    try:
+        placeholders = ', '.join(f':id_{i}' for i in range(len(discord_role_ids)))
+        params = {f'id_{i}': discord_role_ids[i] for i in range(len(discord_role_ids))}
+        params['permission'] = permission
+        row = db.execute(text(f"""
+            SELECT COUNT(*) FROM roles r
+            JOIN roles_permissions rp ON r.role_id = rp.role_id
+            JOIN permissions p ON rp.permission_id = p.permission_id
+            WHERE r.role_discord_id IN ({placeholders})
+              AND p.permission_name = :permission
+        """), params).fetchone()
+        return (row[0] or 0) > 0
+    except Exception as e:
+        print(f"Error checking discord role permission: {e}")
         return False
     finally:
         db.close()

@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import {
   Stack, Group, Text, Button, Drawer, Divider,
-  TextInput, ActionIcon, Box,
+  TextInput, ActionIcon, Box, Select,
 } from '@mantine/core';
 import { useDisclosure } from '@mantine/hooks';
 import { IconPlus, IconTrash, IconCategory } from '@tabler/icons-react';
@@ -172,7 +172,7 @@ const MiscInventoryManagement = () => {
           {deleteError && <Text size="xs" c="red">{deleteError}</Text>}
           <Group gap="xs">
             {item.total_quantity === 0 && (
-              <Button size="compact-sm" variant="outline" color="red" onClick={() => handleDelete(item.id)} loading={deleteSubmit}>
+              <Button size="compact-sm" variant="default" className="delete-btn" onClick={() => handleDelete(item.id)} loading={deleteSubmit}>
                 Confirm
               </Button>
             )}
@@ -229,38 +229,31 @@ const MiscInventoryManagement = () => {
         <Text c="var(--naja-teal)">No items defined yet. Add items to track above.</Text>
       ) : (
         <Stack gap="xl">
+          {/* ── Filter select ──────────────────────────────────────────────────── */}
+          <Select
+            placeholder="Filter by category..."
+            value={
+              activeFilter === null ? null
+              : activeFilter === 'uncategorized' ? '__uncategorized__'
+              : String(activeFilter)
+            }
+            onChange={val => {
+              setDeleteId(null);
+              if (!val) setActiveFilter(null);
+              else if (val === '__uncategorized__') setActiveFilter('uncategorized');
+              else setActiveFilter(Number(val));
+            }}
+            data={[
+              ...groups.map(({ cat }) => ({ value: String(cat.id), label: cat.name })),
+              ...(uncategorized.length > 0 ? [{ value: '__uncategorized__', label: 'Uncategorized' }] : []),
+            ]}
+            clearable
+            styles={inputStyles}
+            style={{ maxWidth: 260 }}
+          />
+
           {/* ── Filter buttons ─────────────────────────────────────────────────── */}
-          <Group gap="xs" wrap="wrap">
-            <Button
-              size="md"
-              variant="default"
-              className={activeFilter === null ? 'filter-btn filter-btn-active' : 'filter-btn'}
-              onClick={() => { setActiveFilter(null); setDeleteId(null); }}
-            >
-              All
-            </Button>
-            {groups.map(({ cat }) => (
-              <Button
-                key={cat.id}
-                size="md"
-                variant="default"
-                className={activeFilter === cat.id ? 'filter-btn filter-btn-active' : 'filter-btn'}
-                onClick={() => { setActiveFilter(cat.id); setDeleteId(null); }}
-              >
-                {cat.name}
-              </Button>
-            ))}
-            {uncategorized.length > 0 && (
-              <Button
-                size="md"
-                variant="default"
-                className={activeFilter === 'uncategorized' ? 'filter-btn filter-btn-active' : 'filter-btn'}
-                onClick={() => { setActiveFilter('uncategorized'); setDeleteId(null); }}
-              >
-                Uncategorized
-              </Button>
-            )}
-          </Group>
+
 
           {groups
             .filter(g => activeFilter === null || activeFilter === g.cat.id)

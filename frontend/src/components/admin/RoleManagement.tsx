@@ -1,29 +1,44 @@
 import { useState, useEffect } from 'react';
 import {
-  Table, Modal, TextInput, Checkbox, Button, Menu,
-  Group, Text, Stack,
+  Drawer, Stack, Group, Text, Button, Box, Select,
+  TextInput, MultiSelect, Divider, ActionIcon, Loader,
 } from '@mantine/core';
-import { IconEdit, IconTrash } from '@tabler/icons-react';
 import { useDisclosure } from '@mantine/hooks';
+import { IconPlus, IconTrash } from '@tabler/icons-react';
+import { drawerStyles, inputStyles } from '../../styles/mantine';
 import type { Role, RoleCreate, RoleUpdate } from '../../types/role';
 import { roleService } from '../../services/admin/roleService';
-import { inputStyles, modalStyles, tableStyles, menuStyles } from '../../styles/mantine';
 
 const RoleManagement = () => {
   const [roles, setRoles] = useState<Role[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [editingRole, setEditingRole] = useState<Role | null>(null);
-  const [, setIsCreating] = useState(false);
-  const [opened, { open, close }] = useDisclosure(false);
 
-  const [formData, setFormData] = useState<RoleCreate>({
-    role_discord_id: undefined,
+  // Filter
+  const [filter, setFilter] = useState<'discord' | 'application' | null>(null);
+
+  // Add drawer
+  const [addOpen, { open: openAdd, close: closeAdd }] = useDisclosure(false);
+  const [addData, setAddData] = useState<RoleCreate>({
+    role_discord_id: '',
     role_name: '',
     role_description: '',
-    grants_access: false,
-    grants_inventory: false,
+    permissions: [],
   });
+  const [addSubmitting, setAddSubmitting] = useState(false);
+  const [addError, setAddError] = useState('');
+
+  // Edit drawer
+  const [editOpen, { open: openEdit, close: closeEdit }] = useDisclosure(false);
+  const [editingRole, setEditingRole] = useState<Role | null>(null);
+  const [editData, setEditData] = useState<RoleUpdate>({});
+  const [editSubmit, setEditSubmit] = useState(false);
+  const [editError, setEditError] = useState('');
+
+  // Inline delete
+  const [deleteId, setDeleteId] = useState<number | null>(null);
+  const [deleteSubmit, setDeleteSubmit] = useState(false);
+  const [deleteError, setDeleteError] = useState('');
 
   useEffect(() => { loadRoles(); }, []);
 
@@ -40,193 +55,332 @@ const RoleManagement = () => {
     }
   };
 
-  const handleCreate = async (e: React.FormEvent) => {
+  // ── Add ──────────────────────────────────────────────────────────────────────
+
+  const handleAdd = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!addData.role_name?.trim()) { setAddError('Role name is required.'); return; }
+    setAddSubmitting(true); setAddError('');
     try {
-      await roleService.createRole(formData);
-      cancelForm();
+      await roleService.createRole({
+        ...addData,
+        role_discord_id: addData.role_discord_id?.trim() || undefined,
+        role_name: addData.role_name.trim(),
+        role_description: addData.role_description?.trim() || undefined,
+      });
+      closeAdd();
+      setAddData({ role_discord_id: '', role_name: '', role_description: '', permissions: [] });
       loadRoles();
     } catch (err: any) {
-      setError(err.message || 'Failed to create role');
+      setAddError(err.message || 'Failed to create role.');
+    } finally {
+      setAddSubmitting(false);
     }
   };
 
-  const handleUpdate = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!editingRole) return;
-    try {
-      const updateData: RoleUpdate = {
-        role_name: formData.role_name,
-        role_description: formData.role_description,
-        grants_access: formData.grants_access,
-        grants_inventory: formData.grants_inventory,
-      };
-      await roleService.updateRole(editingRole.role_id, updateData);
-      cancelForm();
-      loadRoles();
-    } catch (err: any) {
-      setError(err.message || 'Failed to update role');
-    }
-  };
-
-  const handleDelete = async (roleId: number) => {
-    if (!confirm('Are you sure you want to delete this role?')) return;
-    try {
-      await roleService.deleteRole(roleId);
-      loadRoles();
-    } catch (err: any) {
-      setError(err.message || 'Failed to delete role');
-    }
-  };
+  // ── Edit ─────────────────────────────────────────────────────────────────────
 
   const startEdit = (role: Role) => {
     setEditingRole(role);
-    setIsCreating(false);
-    setFormData({
-      role_discord_id: role.role_discord_id,
+    setEditData({
       role_name: role.role_name,
       role_description: role.role_description || '',
-      grants_access: role.grants_access,
-      grants_inventory: role.grants_inventory,
+      permissions: role.permissions,
     });
-    open();
+    setEditError('');
+    setDeleteId(null);
+    openEdit();
   };
 
-  const startCreate = () => {
-    setIsCreating(true);
-    setEditingRole(null);
-    resetForm();
-    open();
+  const handleEdit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingRole) return;
+    if (!editData.role_name?.trim()) { setEditError('Role name is required.'); return; }
+    setEditSubmit(true); setEditError('');
+    try {
+      await roleService.updateRole(editingRole.role_id, {
+        ...editData,
+        role_name: editData.role_name?.trim(),
+        role_description: editData.role_description?.trim() || undefined,
+      });
+      closeEdit();
+      loadRoles();
+    } catch (err: any) {
+      setEditError(err.message || 'Failed to update role.');
+    } finally {
+      setEditSubmit(false);
+    }
   };
 
-  const cancelForm = () => {
-    close();
-    setIsCreating(false);
-    setEditingRole(null);
-    resetForm();
+  // ── Delete ───────────────────────────────────────────────────────────────────
+
+  const startDelete = (role: Role) => {
+    setDeleteId(role.role_id);
+    setDeleteError('');
+    closeEdit();
   };
 
-  const resetForm = () => {
-    setFormData({ role_discord_id: undefined, role_name: '', role_description: '', grants_access: false, grants_inventory: false });
+  const cancelDelete = () => { setDeleteId(null); setDeleteError(''); };
+
+  const handleDelete = async (id: number) => {
+    setDeleteSubmit(true); setDeleteError('');
+    try {
+      await roleService.deleteRole(id);
+      setRoles(prev => prev.filter(r => r.role_id !== id));
+      setDeleteId(null);
+    } catch (err: any) {
+      setDeleteError(err.message || 'Failed to delete role.');
+    } finally {
+      setDeleteSubmit(false);
+    }
   };
 
-  if (loading) return <Text c="#CCAC31">Loading roles...</Text>;
+  // ── Grouping ─────────────────────────────────────────────────────────────────
+
+  const discordRoles = roles.filter(r => !r.role_discord_id?.startsWith('app-'));
+  const appRoles = roles.filter(r => r.role_discord_id?.startsWith('app-'));
+
+  const showDiscord = filter === null || filter === 'discord';
+  const showApp = filter === null || filter === 'application';
+
+  // ── Row renderer ─────────────────────────────────────────────────────────────
+
+  const renderRole = (role: Role, idx: number) => (
+    <Box
+      key={role.role_id}
+      px="sm"
+      py="xs"
+      className={deleteId !== role.role_id ? 'inventory-row' : undefined}
+      style={{
+        backgroundColor: idx % 2 === 0 ? 'rgba(255,255,255,0.03)' : 'transparent',
+        borderRadius: 4,
+      }}
+    >
+      {deleteId === role.role_id ? (
+        <Stack gap={6} onBlur={e => { if (!e.currentTarget.contains(e.relatedTarget)) cancelDelete(); }}>
+          <Text size="sm" c="var(--naja-text)">
+            Remove <Text span fw={500} c="var(--naja-gold)">{role.role_name}</Text>? This cannot be undone.
+          </Text>
+          {deleteError && <Text size="xs" c="red">{deleteError}</Text>}
+          <Group gap="xs">
+            <Button size="compact-sm" variant="default" className="delete-btn" onClick={() => handleDelete(role.role_id)} loading={deleteSubmit}>
+              Confirm
+            </Button>
+            <Button size="compact-sm" variant="outline" color="gray" onClick={cancelDelete} disabled={deleteSubmit} autoFocus>
+              Cancel
+            </Button>
+          </Group>
+        </Stack>
+      ) : (
+        <Group gap="md" align="center" wrap="nowrap" onClick={() => startEdit(role)} style={{ cursor: 'pointer' }}>
+          <Box style={{ flex: 3, minWidth: 0 }}>
+            <Text size="md" c="var(--naja-text)" truncate>{role.role_name}</Text>
+            {role.role_description && (
+              <Text size="xs" c="dimmed" truncate>{role.role_description}</Text>
+            )}
+          </Box>
+          <Box style={{ flex: 3, minWidth: 0 }}>
+            <Text size="sm" c="dimmed" truncate>
+              {role.permissions.length > 0 ? role.permissions.join(', ') : '—'}
+            </Text>
+          </Box>
+          <Box style={{ width: 40 }}>
+            <ActionIcon
+              variant="subtle"
+              color="red"
+              size="40px"
+              onClick={e => { e.stopPropagation(); startDelete(role); }}
+            >
+              <IconTrash size={18} />
+            </ActionIcon>
+          </Box>
+        </Group>
+      )}
+    </Box>
+  );
+
+  if (loading) return <Loader size="xs" color="najaGold" />;
 
   return (
-    <Stack gap="md">
+    <Stack gap="lg">
       <Group justify="space-between" align="center">
         <h1 style={{ margin: 0 }}>Role Management</h1>
-        <Button color="najaGold" onClick={startCreate}>+ Create Role</Button>
+        <Button variant="outline" color="najaGold" leftSection={<IconPlus size={16} />} onClick={openAdd}>
+          Create Role
+        </Button>
       </Group>
 
       {error && <Text c="red">{error}</Text>}
 
-      <Modal
-        opened={opened}
-        onClose={cancelForm}
-        title={<Text c="#CCAC31" fw={700}>{editingRole ? 'Edit Role' : 'Create New Role'}</Text>}
-        styles={modalStyles}
+      {roles.length > 0 && (
+        <Select
+          placeholder="Filter by type..."
+          value={filter}
+          onChange={val => { setDeleteId(null); setFilter(val as 'discord' | 'application' | null); }}
+          data={[
+            { value: 'discord', label: 'Discord Roles' },
+            { value: 'application', label: 'Application Roles' },
+          ]}
+          clearable
+          styles={inputStyles}
+          style={{ maxWidth: 260 }}
+        />
+      )}
+
+      {roles.length === 0 ? (
+        <Text c="var(--naja-teal)">No roles found. Create one to get started.</Text>
+      ) : (
+        <Stack gap="xl">
+          <Group gap="md" px="sm" pb="xs" style={{ borderBottom: '1px solid rgba(204,172,49,0.3)' }}>
+            <Box style={{ flex: 3 }}>
+              <Text size="xs" fw={700} tt="uppercase" c="var(--naja-gold)" style={{ letterSpacing: '0.05em' }}>Name</Text>
+            </Box>
+            <Box style={{ flex: 3 }}>
+              <Text size="xs" fw={700} tt="uppercase" c="var(--naja-gold)" style={{ letterSpacing: '0.05em' }}>Grants</Text>
+            </Box>
+            <Box style={{ width: 40 }} />
+          </Group>
+
+          {showDiscord && discordRoles.length > 0 && (
+            <Stack gap="xs">
+              <Group gap="xs" align="center">
+                <Text size="lg" fw={700} tt="uppercase" c="var(--naja-gold)" style={{ letterSpacing: '0.05em' }}>
+                  Discord Roles
+                </Text>
+                <Divider flex={1} color="rgba(204,172,49,0.15)" />
+              </Group>
+              <Stack gap={0}>
+                {discordRoles.map((role, idx) => renderRole(role, idx))}
+              </Stack>
+            </Stack>
+          )}
+
+          {showApp && appRoles.length > 0 && (
+            <Stack gap="xs">
+              <Group gap="xs" align="center">
+                <Text size="lg" fw={700} tt="uppercase" c="var(--naja-gold)" style={{ letterSpacing: '0.05em' }}>
+                  Application Roles
+                </Text>
+                <Divider flex={1} color="rgba(204,172,49,0.15)" />
+              </Group>
+              <Stack gap={0}>
+                {appRoles.map((role, idx) => renderRole(role, idx))}
+              </Stack>
+            </Stack>
+          )}
+        </Stack>
+      )}
+
+      {/* ── Add Drawer ───────────────────────────────────────────────────────── */}
+      <Drawer
+        opened={addOpen}
+        onClose={closeAdd}
+        title={<Text fw={700} c="var(--naja-gold)" tt="uppercase" size="md" style={{ letterSpacing: '0.05em' }}>Create Role</Text>}
+        position="right"
+        size="lg"
+        styles={drawerStyles}
       >
-        <form onSubmit={editingRole ? handleUpdate : handleCreate}>
-          <Stack gap="sm">
+        <form onSubmit={handleAdd}>
+          <Stack gap="sm" pt="xs">
             <TextInput
               label="Discord Role ID"
               description="Required for Discord roles. Leave blank for app-only roles."
-              value={formData.role_discord_id}
-              onChange={(e) => setFormData({ ...formData, role_discord_id: e.target.value })}
-              disabled={!!editingRole}
+              value={addData.role_discord_id || ''}
+              onChange={e => setAddData({ ...addData, role_discord_id: e.currentTarget.value })}
               styles={inputStyles}
+              autoFocus
             />
             <TextInput
               label="Role Name"
-              value={formData.role_name}
-              onChange={(e) => setFormData({ ...formData, role_name: e.target.value })}
-              required
+              value={addData.role_name || ''}
+              onChange={e => { setAddData({ ...addData, role_name: e.currentTarget.value }); setAddError(''); }}
               styles={inputStyles}
+              required
             />
             <TextInput
               label="Description"
-              value={formData.role_description}
-              onChange={(e) => setFormData({ ...formData, role_description: e.target.value })}
+              value={addData.role_description || ''}
+              onChange={e => setAddData({ ...addData, role_description: e.currentTarget.value })}
               styles={inputStyles}
             />
-            <Checkbox
-              label="Grants Access"
-              checked={formData.grants_access}
-              onChange={(e) => setFormData({ ...formData, grants_access: e.currentTarget.checked })}
-              color="najaGold"
-              styles={{ label: { color: '#DDD3BA', fontFamily: "'Vollkorn', Georgia, serif" } }}
+            <MultiSelect
+              label="Permissions"
+              value={addData.permissions || []}
+              onChange={val => setAddData({ ...addData, permissions: val })}
+              data={[
+                { value: 'site_access', label: 'Site Access' },
+                { value: 'admin', label: 'Admin' },
+                { value: 'inventory', label: 'Inventory' },
+                { value: 'blueprints', label: 'Blueprints' },
+              ]}
+              styles={inputStyles}
             />
-            <Checkbox
-              label="Grants Inventory Management"
-              checked={formData.grants_inventory}
-              onChange={(e) => setFormData({ ...formData, grants_inventory: e.currentTarget.checked })}
-              color="najaGold"
-              styles={{ label: { color: '#DDD3BA', fontFamily: "'Vollkorn', Georgia, serif" } }}
-            />
-            <Group justify="flex-end" mt="md">
-              <Button variant="outline" color="gray" onClick={cancelForm}>Cancel</Button>
-              <Button type="submit" color="najaGold">{editingRole ? 'Update' : 'Create'}</Button>
+            {addError && <Text size="sm" c="red">{addError}</Text>}
+            <Group justify="flex-end" mt="xs">
+              <Button variant="subtle" color="gray" onClick={closeAdd} disabled={addSubmitting}>Cancel</Button>
+              <Button type="submit" variant="outline" color="najaGold" loading={addSubmitting}>Create</Button>
             </Group>
           </Stack>
         </form>
-      </Modal>
+      </Drawer>
 
-      <Table striped highlightOnHover styles={tableStyles}>
-        <Table.Thead>
-          <Table.Tr>
-            <Table.Th>ID</Table.Th>
-            <Table.Th>Discord ID</Table.Th>
-            <Table.Th>Name</Table.Th>
-            <Table.Th>Description</Table.Th>
-            <Table.Th>Grants Access</Table.Th>
-            <Table.Th>Grants Inventory</Table.Th>
-            <Table.Th>Actions</Table.Th>
-          </Table.Tr>
-        </Table.Thead>
-        <Table.Tbody>
-          {roles.map((role) => (
-            <Table.Tr key={role.role_id}>
-              <Table.Td>{role.role_id}</Table.Td>
-              <Table.Td>{role.role_discord_id}</Table.Td>
-              <Table.Td>{role.role_name}</Table.Td>
-              <Table.Td>{role.role_description || '—'}</Table.Td>
-              <Table.Td>
-                <Text size="sm" c={role.grants_access ? 'var(--naja-gold)' : 'dimmed'}>
-                  {role.grants_access ? 'Yes' : 'No'}
-                </Text>
-              </Table.Td>
-              <Table.Td>
-                <Text size="sm" c={role.grants_inventory ? 'var(--naja-gold)' : 'dimmed'}>
-                  {role.grants_inventory ? 'Yes' : 'No'}
-                </Text>
-              </Table.Td>
-              <Table.Td>
-                <Menu position="bottom-end" withArrow arrowSize={8} styles={menuStyles}>
-                  <Menu.Target>
-                    <Button variant="subtle" color="gray" size="xs" px={16}>...</Button>
-                  </Menu.Target>
-                  <Menu.Dropdown>
-                    <Menu.Item leftSection={<IconEdit size={14} stroke={1.5} />} onClick={() => startEdit(role)}>
-                      Edit
-                    </Menu.Item>
-                    <Menu.Divider style={{ borderColor: 'rgba(204, 172, 49, 0.2)' }} />
-                    <Menu.Item
-                      leftSection={<IconTrash size={14} stroke={1.5} />}
-                      onClick={() => handleDelete(role.role_id)}
-                      styles={{ item: { ...menuStyles.item, color: '#ff6b6b' } }}
-                    >
-                      Delete
-                    </Menu.Item>
-                  </Menu.Dropdown>
-                </Menu>
-              </Table.Td>
-            </Table.Tr>
-          ))}
-        </Table.Tbody>
-      </Table>
-
-      {roles.length === 0 && <Text c="#DDD3BA">No roles found. Create one to get started.</Text>}
+      {/* ── Edit Drawer ──────────────────────────────────────────────────────── */}
+      <Drawer
+        opened={editOpen}
+        onClose={closeEdit}
+        title={
+          <Text fw={700} c="var(--naja-gold)" tt="uppercase" size="md" style={{ letterSpacing: '0.05em' }}>
+            {editingRole?.role_name || 'Edit Role'}
+          </Text>
+        }
+        position="right"
+        size="lg"
+        styles={drawerStyles}
+      >
+        <form onSubmit={handleEdit}>
+          <Stack gap="sm" pt="xs">
+            {editingRole?.role_discord_id && !editingRole.role_discord_id.startsWith('app-') && (
+              <TextInput
+                label="Discord Role ID"
+                value={editingRole.role_discord_id}
+                disabled
+                styles={inputStyles}
+              />
+            )}
+            <TextInput
+              label="Role Name"
+              value={editData.role_name || ''}
+              onChange={e => { setEditData({ ...editData, role_name: e.currentTarget.value }); setEditError(''); }}
+              styles={inputStyles}
+              autoFocus
+              required
+            />
+            <TextInput
+              label="Description"
+              value={editData.role_description || ''}
+              onChange={e => setEditData({ ...editData, role_description: e.currentTarget.value })}
+              styles={inputStyles}
+            />
+            <MultiSelect
+              label="Permissions"
+              value={editData.permissions || []}
+              onChange={val => setEditData({ ...editData, permissions: val })}
+              data={[
+                { value: 'site_access', label: 'Site Access' },
+                { value: 'admin', label: 'Admin' },
+                { value: 'inventory', label: 'Inventory' },
+                { value: 'blueprints', label: 'Blueprints' },
+              ]}
+              styles={inputStyles}
+            />
+            {editError && <Text size="sm" c="red">{editError}</Text>}
+            <Group justify="flex-end" mt="xs">
+              <Button variant="subtle" color="gray" onClick={closeEdit} disabled={editSubmit}>Cancel</Button>
+              <Button type="submit" variant="outline" color="najaGold" loading={editSubmit}>Save</Button>
+            </Group>
+          </Stack>
+        </form>
+      </Drawer>
     </Stack>
   );
 };

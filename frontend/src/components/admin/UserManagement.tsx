@@ -1,17 +1,16 @@
 import { useState, useEffect } from 'react';
 import {
-  Table, Select, Button,
-  Group, Text, Stack, Menu,
-  Modal, MultiSelect,
+  Select, Button, Group, Text, Stack, Box, Drawer, MultiSelect,
+  Divider,
 } from '@mantine/core';
 import { useDisclosure } from '@mantine/hooks';
-import { useNavigate } from 'react-router-dom';
 import { IconUser, IconTrash } from '@tabler/icons-react';
 import type { User, UserRole } from '../../types/user';
 import type { Role } from '../../types/role';
 import { userService } from '../../services/admin/userService';
 import { roleService } from '../../services/admin/roleService';
-import { tableStyles, modalStyles, inputStyles, menuStyles } from '../../styles/mantine';
+import { drawerStyles, inputStyles } from '../../styles/mantine';
+import UserProfileDrawer from './UserProfileDrawer';
 
 const STATUS_OPTIONS = [
   { value: 'approved', label: 'Approved' },
@@ -20,31 +19,35 @@ const STATUS_OPTIONS = [
   { value: 'banned',   label: 'Banned'   },
 ];
 
-const statusSelectStyles = {
-  input: {
-    backgroundColor: 'transparent',
-    border: 'none',
-    padding: 0,
-    height: 'auto',
-    minHeight: 'auto',
-    fontSize: '13px',
-    fontWeight: '600',
-    cursor: 'pointer',
-  },
-};
+
+const statusColor = (s: User['status']) =>
+  s === 'approved' ? 'var(--naja-gold)'
+  : s === 'pending'  ? 'var(--naja-teal)'
+  : s === 'rejected' ? '#ff6b6b'
+  : '#888';
+
+const displayName = (user: User) =>
+  user.server_nickname || user.global_name || user.discord_username;
 
 const UserManagement = () => {
-  const [users, setUsers]       = useState<User[]>([]);
+  const [users,    setUsers]    = useState<User[]>([]);
   const [allRoles, setAllRoles] = useState<Role[]>([]);
-  const [loading, setLoading]   = useState(true);
-  const [error, setError]       = useState<string | null>(null);
+  const [loading,  setLoading]  = useState(true);
+  const [error,    setError]    = useState<string | null>(null);
 
-  const navigate = useNavigate();
+  // Edit drawer
+  const [editOpen, { open: openEdit, close: closeEdit }] = useDisclosure(false);
+  const [editingUser,    setEditingUser]    = useState<User | null>(null);
+  const [editStatus,     setEditStatus]     = useState<User['status']>('pending');
+  const [editRoleIds,    setEditRoleIds]    = useState<string[]>([]);
+  const [editSubmitting, setEditSubmitting] = useState(false);
+  const [editError,      setEditError]      = useState<string | null>(null);
+  const [confirmDelete,    setConfirmDelete]    = useState(false);
+  const [deleteSubmitting, setDeleteSubmitting] = useState(false);
 
-  const [editingUser, setEditingUser]         = useState<User | null>(null);
-  const [selectedRoleIds, setSelectedRoleIds] = useState<string[]>([]);
-  const [modalError, setModalError]           = useState<string | null>(null);
-  const [rolesModalOpen, { open: openRoles, close: closeRoles }] = useDisclosure(false);
+  // Profile drawer
+  const [profileOpen, { open: openProfile, close: closeProfile }] = useDisclosure(false);
+  const [profileUserId, setProfileUserId] = useState<number | null>(null);
 
   useEffect(() => {
     Promise.all([userService.getAllUsers(), roleService.getAllRoles()])
@@ -53,59 +56,65 @@ const UserManagement = () => {
       .finally(() => setLoading(false));
   }, []);
 
-  const handleStatusChange = async (userId: number, status: string) => {
-    try {
-      const updated = await userService.updateUser(userId, { status: status as User['status'] });
-      setUsers((prev) => prev.map((u) => u.id === userId ? { ...u, status: updated.status } : u));
-    } catch {
-      setError('Failed to update status.');
-    }
-  };
+  const roleSelectData = allRoles.map(r => ({ value: String(r.role_id), label: r.role_name }));
 
-  const openEditRoles = (user: User) => {
+  // ── Edit ─────────────────────────────────────────────────────────────────────
+
+  const startEdit = (user: User) => {
     setEditingUser(user);
-    setModalError(null);
-    setSelectedRoleIds(
-      user.roles.map((ur) => {
-        const match = allRoles.find((r) => r.role_name === ur.role_name);
-        return match ? String(match.role_id) : '';
-      }).filter(Boolean)
+    setEditStatus(user.status);
+    setEditRoleIds(
+      user.roles
+        .map(ur => allRoles.find(r => r.role_name === ur.role_name))
+        .filter(Boolean)
+        .map(r => String(r!.role_id))
     );
-    openRoles();
+    setEditError(null);
+    setConfirmDelete(false);
+    openEdit();
   };
 
-  const handleSaveRoles = async () => {
+  const handleSave = async () => {
     if (!editingUser) return;
-    setModalError(null);
+    setEditSubmitting(true); setEditError(null);
     try {
+      const statusUpdated = await userService.updateUser(editingUser.id, { status: editStatus });
       const { roles: updatedRoles, warning } = await userService.setUserRoles(
         editingUser.id,
-        selectedRoleIds.map(Number)
+        editRoleIds.map(Number)
       );
-      setUsers((prev) =>
-        prev.map((u) => u.id === editingUser.id ? { ...u, roles: updatedRoles as UserRole[] } : u)
-      );
-      closeRoles();
+      setUsers(prev => prev.map(u =>
+        u.id === editingUser.id
+          ? { ...u, status: statusUpdated.status, roles: updatedRoles as UserRole[] }
+          : u
+      ));
+      closeEdit();
       if (warning) setError(warning);
     } catch (err) {
-      setModalError(err instanceof Error ? err.message : 'Failed to update roles.');
+      setEditError(err instanceof Error ? err.message : 'Failed to save changes.');
+    } finally {
+      setEditSubmitting(false);
     }
   };
 
-  const handleDelete = async (userId: number) => {
-    if (!confirm('Are you sure you want to delete this user?')) return;
+  const handleDelete = async () => {
+    if (!editingUser) return;
+    setDeleteSubmitting(true);
     try {
-      await userService.deleteUser(userId);
-      setUsers((prev) => prev.filter((u) => u.id !== userId));
+      await userService.deleteUser(editingUser.id);
+      setUsers(prev => prev.filter(u => u.id !== editingUser.id));
+      closeEdit();
     } catch {
-      setError('Failed to delete user.');
+      setEditError('Failed to delete user.');
+      setDeleteSubmitting(false);
     }
   };
 
-  const roleSelectData = allRoles.map((r) => ({
-    value: String(r.role_id),
-    label: r.role_name,
-  }));
+  const startProfile = (user: User, e: React.MouseEvent) => {
+    e.stopPropagation();
+    setProfileUserId(user.id);
+    openProfile();
+  };
 
   if (loading) return <Text c="var(--naja-gold)">Loading users...</Text>;
 
@@ -115,124 +124,175 @@ const UserManagement = () => {
 
       {error && <Text c="red">{error}</Text>}
 
-      {/* Edit Roles Modal */}
-      <Modal
-        opened={rolesModalOpen}
-        onClose={closeRoles}
+      {users.length === 0 ? (
+        <Text c="var(--naja-text)">No users found.</Text>
+      ) : (
+        <Stack gap={0}>
+          {/* ── Column headers (desktop only) ───────────────────────────────────── */}
+          <Group gap="md" px="sm" pb="xs" visibleFrom="sm" style={{ borderBottom: '1px solid rgba(204,172,49,0.3)' }}>
+            <Box style={{ flex: 3 }}>
+              <Text size="xs" fw={700} tt="uppercase" c="var(--naja-gold)" style={{ letterSpacing: '0.05em' }}>User</Text>
+            </Box>
+            <Box style={{ flex: 2 }}>
+              <Text size="xs" fw={700} tt="uppercase" c="var(--naja-gold)" style={{ letterSpacing: '0.05em' }}>Status</Text>
+            </Box>
+            <Box style={{ flex: 3 }}>
+              <Text size="xs" fw={700} tt="uppercase" c="var(--naja-gold)" style={{ letterSpacing: '0.05em' }}>Roles</Text>
+            </Box>
+            <Box style={{ width: 110 }} />
+          </Group>
+
+          {/* ── Mobile divider ──────────────────────────────────────────────────── */}
+          <Box hiddenFrom="sm" style={{ borderBottom: '1px solid rgba(204,172,49,0.3)', marginBottom: 2 }} />
+
+          {users.map((user, idx) => (
+            <Box
+              key={user.id}
+              px="sm"
+              py="xs"
+              className="inventory-row"
+              style={{
+                backgroundColor: idx % 2 === 0 ? 'rgba(255,255,255,0.03)' : 'transparent',
+                borderRadius: 4,
+                cursor: 'pointer',
+              }}
+              onClick={() => startEdit(user)}
+            >
+              {/* Desktop layout */}
+              <Group gap="md" align="center" wrap="nowrap" visibleFrom="sm">
+                <Box style={{ flex: 3, minWidth: 0 }}>
+                  <Text size="md" fw={600} c="var(--naja-text)" truncate>{displayName(user)}</Text>
+                  <Text size="xs" c="dimmed" truncate>{user.discord_username}</Text>
+                </Box>
+                <Box style={{ flex: 2 }}>
+                  <Text size="sm" fw={600} style={{ color: statusColor(user.status) }}>
+                    {user.status.charAt(0).toUpperCase() + user.status.slice(1)}
+                  </Text>
+                </Box>
+                <Box style={{ flex: 3, minWidth: 0 }}>
+                  <Text size="sm" c="dimmed" truncate>
+                    {user.roles.length > 0 ? user.roles.map(r => r.role_name).join(', ') : '—'}
+                  </Text>
+                </Box>
+                <Button
+                  variant="default"
+                  size="md"
+                  leftSection={<IconUser size={14} />}
+                  className="filter-btn"
+                  onClick={e => startProfile(user, e)}
+                >
+                  View Profile
+                </Button>
+              </Group>
+
+              {/* Mobile layout */}
+              <Group gap="sm" align="center" wrap="nowrap" hiddenFrom="sm">
+                <Stack gap={2} style={{ flex: 1, minWidth: 0 }}>
+                  <Text size="md" fw={600} c="var(--naja-text)" truncate>{displayName(user)}</Text>
+                  <Group gap="xs">
+                    <Text size="xs" fw={600} style={{ color: statusColor(user.status) }}>
+                      {user.status.charAt(0).toUpperCase() + user.status.slice(1)}
+                    </Text>
+                    {user.roles.length > 0 && (
+                      <Text size="xs" c="dimmed" truncate>· {user.roles.map(r => r.role_name).join(', ')}</Text>
+                    )}
+                  </Group>
+                </Stack>
+                <Button
+                  variant="default"
+                  size="sm"
+                  leftSection={<IconUser size={14} />}
+                  className="filter-btn"
+                  onClick={e => startProfile(user, e)}
+                >
+                  View Profile
+                </Button>
+              </Group>
+            </Box>
+          ))}
+        </Stack>
+      )}
+
+      {/* ── Edit Drawer ─────────────────────────────────────────────────────────── */}
+      <Drawer
+        opened={editOpen}
+        onClose={closeEdit}
         title={
-          <Text c="var(--naja-gold)" fw={700}>
-            Edit Roles — {editingUser?.discord_username}
+          <Text fw={700} c="var(--naja-gold)" tt="uppercase" size="md" style={{ letterSpacing: '0.05em' }}>
+            {editingUser ? displayName(editingUser) : ''}
           </Text>
         }
-        styles={modalStyles}
+        position="right"
+        size="lg"
+        styles={drawerStyles}
       >
-        <Stack gap="md">
-          <Text size="sm" c="var(--naja-teal)">
-            Note: roles are synced from Discord on each login and may be overwritten.
-          </Text>
-          <MultiSelect
-            label="Assigned Roles"
-            data={roleSelectData}
-            value={selectedRoleIds}
-            onChange={setSelectedRoleIds}
+        <Stack gap="md" pt="xs">
+          <Select
+            label="Status"
+            data={STATUS_OPTIONS}
+            value={editStatus}
+            onChange={val => val && setEditStatus(val as User['status'])}
             styles={inputStyles}
           />
-          {modalError && <Text size="sm" c="red">{modalError}</Text>}
-          <Group justify="flex-end">
-            <Button variant="outline" color="gray" onClick={closeRoles}>Cancel</Button>
-            <Button color="najaGold" onClick={handleSaveRoles}>Save</Button>
-          </Group>
-        </Stack>
-      </Modal>
+          <MultiSelect
+            label="Roles"
+            data={roleSelectData}
+            value={editRoleIds}
+            onChange={setEditRoleIds}
+            styles={inputStyles}
+          />
+          <Text size="xs" c="var(--naja-teal)">
+            Roles are synced from Discord on each login and may be overwritten.
+          </Text>
 
-      <Table striped highlightOnHover styles={tableStyles}>
-        <Table.Thead>
-          <Table.Tr>
-            <Table.Th>User</Table.Th>
-            <Table.Th style={{ width: 130 }}>Status</Table.Th>
-            <Table.Th visibleFrom="sm">Roles</Table.Th>
-            <Table.Th>Actions</Table.Th>
-          </Table.Tr>
-        </Table.Thead>
-        <Table.Tbody>
-          {users.map((user) => (
-            <Table.Tr key={user.id}>
+          <Divider color="rgba(204,172,49,0.15)" />
 
-              <Table.Td style={{ width: 330 }}>
-                <Group gap="sm">
-                  <Stack gap={2}>
-                    <Text size="sm" fw={600} c="var(--naja-text)">
-                      {user.server_nickname || user.global_name || user.discord_username}
-                    </Text>
-                  </Stack>
-                </Group>
-              </Table.Td>
+          {editError && <Text size="sm" c="red">{editError}</Text>}
 
-              <Table.Td style={{ width: 150 }}>
-                <Select
-                  data={STATUS_OPTIONS}
-                  value={user.status}
-                  onChange={(val) => val && handleStatusChange(user.id, val)}
-                  size="xs"
-                  styles={{
-                    ...statusSelectStyles,
-                    input: {
-                      ...statusSelectStyles.input,
-                      color: user.status === 'approved' ? 'var(--naja-gold)'
-                           : user.status === 'pending'  ? 'var(--naja-teal)'
-                           : user.status === 'rejected' ? '#ff6b6b'
-                           : '#888',
-                    },
-                  }}
-                />
-              </Table.Td>
-
-              <Table.Td visibleFrom="sm">
-                <Text
-                  size="sm"
-                  c="var(--naja-text)"
-                  style={{ cursor: 'pointer' }}
-                  onClick={() => openEditRoles(user)}
-                >
-                  {user.roles.length > 0
-                    ? user.roles.map((r) => r.role_name).join(', ')
-                    : <Text size="xs" c="dimmed">—</Text>
-                  }
+          {confirmDelete ? (
+            <Stack gap="xs">
+              <Text size="sm" c="var(--naja-text)">
+                Delete{' '}
+                <Text span fw={700} c="var(--naja-gold)">
+                  {editingUser ? displayName(editingUser) : ''}
                 </Text>
-              </Table.Td>
+                ? This cannot be undone.
+              </Text>
+              <Group gap="xs">
+                <Button size="compact-sm" variant="default" className="delete-btn" onClick={handleDelete} loading={deleteSubmitting}>
+                  Confirm
+                </Button>
+                <Button size="compact-sm" variant="subtle" color="gray" onClick={() => setConfirmDelete(false)} disabled={deleteSubmitting}>
+                  Cancel
+                </Button>
+              </Group>
+            </Stack>
+          ) : (
+            <Group justify="space-between">
+              <Button
+                variant="default"
+                className="delete-btn"
+                size="sm"
+                leftSection={<IconTrash size={14} />}
+                onClick={() => setConfirmDelete(true)}
+                disabled={editSubmitting}
+              >
+                Delete User
+              </Button>
+              <Group gap="xs" justify="space-between">
+                <Button variant="subtle" color="gray" onClick={closeEdit} disabled={editSubmitting}>Cancel</Button>
+                <Button variant="outline" color="najaGold" onClick={handleSave} loading={editSubmitting}>Save</Button>
+              </Group>
+            </Group>
+          )}
+        </Stack>
+      </Drawer>
 
-              <Table.Td>
-                <Menu position="bottom-end" withArrow arrowSize={8} styles={menuStyles}>
-                  <Menu.Target>
-                    <Button variant="subtle" color="gray" size="xs" px={6}>
-                      ...
-                    </Button>
-                  </Menu.Target>
-                  <Menu.Dropdown>
-                    <Menu.Item
-                      leftSection={<IconUser size={14} stroke={1.5} />}
-                      onClick={() => navigate(`/admin/users/${user.id}`)}
-                    >
-                      View Profile
-                    </Menu.Item>
-                    <Menu.Divider style={{ borderColor: 'rgba(204, 172, 49, 0.2)' }} />
-                    <Menu.Item
-                      leftSection={<IconTrash size={14} stroke={1.5} />}
-                      onClick={() => handleDelete(user.id)}
-                      styles={{ item: { ...menuStyles.item, color: '#ff6b6b' } }}
-                    >
-                      Delete
-                    </Menu.Item>
-                  </Menu.Dropdown>
-                </Menu>
-              </Table.Td>
-
-            </Table.Tr>
-          ))}
-        </Table.Tbody>
-      </Table>
-
-      {users.length === 0 && <Text c="var(--naja-text)">No users found.</Text>}
+      <UserProfileDrawer
+        opened={profileOpen}
+        onClose={closeProfile}
+        userId={profileUserId}
+      />
     </Stack>
   );
 };

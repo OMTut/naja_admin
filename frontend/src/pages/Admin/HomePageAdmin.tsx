@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Stack, Group, Text, Button } from '@mantine/core';
+import { Stack, Group, Text, Button, Divider } from '@mantine/core';
 import { IconRefresh } from '@tabler/icons-react';
 import { blueprintService } from '../../services/admin/blueprintService';
 import { oreService } from '../../services/admin/oreService';
@@ -57,20 +57,33 @@ const HomePageAdmin = () => {
       <h1 style={{ margin: 0 }}>Admin Dashboard</h1>
       <Text>Welcome to the administration panel.</Text>
 
-      <Stack gap="xs">
-        <Text size="md" fw={700} c="#CCAC31" style={sectionLabel}>Quick Actions</Text>
-        <Group gap="sm">
+      <Stack gap="lg">
+        <Group gap="xs">
+          <Text size="md" fw={700} c="#CCAC31" style={sectionLabel}>Quick Actions</Text>
+          <Divider flex={1} color="rgba(204,172,49,0.15)" />
+        </Group>
+        <Group gap="lg">
           <Button variant="outline" color="najaGold" onClick={() => navigate('/admin/roles')}>
             Manage Roles
           </Button>
           <Button variant="outline" color="najaGold" onClick={() => navigate('/admin/users')}>
             Manage Users
           </Button>
+          <Button variant="outline" color="najaGold" onClick={() => navigate('/admin/inventory')}>
+            Manage Inventory
+          </Button>
+          <Button variant="outline" color="najaGold" onClick={() => navigate('/admin/permissions')}>
+            Manage Permissions
+          </Button>
         </Group>
       </Stack>
 
-      <Stack gap="xs">
-        <Text size="md" fw={700} c="#CCAC31" style={sectionLabel}>Services</Text>
+      <Stack gap="sm">
+        <Group gap="xs" align="center">
+          <Text size="md" fw={700} c="#CCAC31" style={sectionLabel}>Services</Text>
+          <Divider flex={1} color="rgba(204,172,49,0.15)" />
+        </Group>
+        <Text>Pulls and syncs data from SC_Data: Blueprints, Ores</Text>
         <Group gap="sm" align="center">
           <Button
             variant="outline"
@@ -83,8 +96,6 @@ const HomePageAdmin = () => {
           </Button>
           {syncMsg   && <Text size="sm" c="var(--naja-teal)">{syncMsg}</Text>}
           {syncError && <Text size="sm" c="red">{syncError}</Text>}
-        </Group>
-        <Group gap="sm" align="center">
           <Button
             variant="outline"
             color="najaGold"

@@ -16,7 +16,7 @@ from database.models.user import UserStatus
 
 
 from .session import get_session, is_session_expired, update_session_access
-from services.role_access import check_user_has_access_role, get_user_access_roles
+from services.role_access import check_site_access
 from services.sync_user_roles import sync_user_roles, sync_user_roles_preserving_app
 from services.discord_api import get_all_guild_role_ids as _get_all_guild_role_ids_shared
 
@@ -219,12 +219,10 @@ async def discord_callback(code: str = None, error: str = None):
             # Check if user's Discord roles grant access to the application
             # Send them home if false. Continue if true.
             user_discord_roles = guild_member_info.get('roles', [])
-            has_access = check_user_has_access_role(user_discord_roles)
-            
+            has_access = check_site_access(user_discord_roles)
+
             if not has_access:
-                # Get role details for better error message
-                user_role_details = get_user_access_roles(user_discord_roles)
-                print(f"Access denied - user's roles: {user_role_details}")
+                print(f"Access denied - user's Discord roles: {user_discord_roles}")
                 return RedirectResponse(
                     url=f"{frontend_url}/?error=insufficient_role&message=Access Denied. You need an approved role in the Discord server to access this application."
                 )
