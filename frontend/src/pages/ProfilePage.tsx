@@ -55,7 +55,7 @@ const ProfilePage = () => {
     ? new Date(profile.created_at).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })
     : '—';
 
-  if (loading) return <Text c="var(--naja-gold)">Loading profile...</Text>;
+  if (loading) return <Text c="najaGold">Loading profile...</Text>;
 
   return (
     <Stack gap="xl" maw={640}>
@@ -63,8 +63,6 @@ const ProfilePage = () => {
         <h1 style={{ margin: 0 }}>Profile</h1>
         {isAppAdmin && (
           <Button
-            variant="outline"
-            color="najaGold"
             size="xs"
             leftSection={<IconRefresh size={14} />}
             loading={resyncing}

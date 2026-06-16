@@ -189,7 +189,7 @@ const MiscInventoryTable = () => {
     }
   };
 
-  if (loading) return <Text c="var(--naja-gold)">Loading misc inventory...</Text>;
+  if (loading) return <Text c="najaGold">Loading misc inventory...</Text>;
 
   return (
     <Stack gap="lg">
@@ -197,8 +197,6 @@ const MiscInventoryTable = () => {
 
       <Group justify="flex-end">
         <Button
-          variant="outline"
-          color="najaGold"
           leftSection={<IconPlus size={16} />}
           onClick={openAdd}
           disabled={catalog.length === 0}
@@ -208,11 +206,11 @@ const MiscInventoryTable = () => {
       </Group>
 
       {catalog.length === 0 && (
-        <Text c="var(--naja-teal)">No tracked items defined yet. An admin must add items before holdings can be reported.</Text>
+        <Text c="najaTeal">No tracked items defined yet. An admin must add items before holdings can be reported.</Text>
       )}
 
       {catalog.length > 0 && holdings.length === 0 && (
-        <Text c="var(--naja-teal)">No holdings reported yet.</Text>
+        <Text c="najaTeal">No holdings reported yet.</Text>
       )}
 
       {holdings.length > 0 && (
@@ -237,20 +235,20 @@ const MiscInventoryTable = () => {
                   onClick={() => handleRowClick(h)}
                   style={{ cursor: 'pointer', opacity: depleted ? 0.45 : 1 }}
                 >
-                  <Table.Td><Text size="sm" c="var(--naja-text)">{h.display_name}</Text></Table.Td>
+                  <Table.Td><Text size="sm">{h.display_name}</Text></Table.Td>
                   <Table.Td>
                     {h.category
                       ? <Badge variant="outline" color="najaGold" size="sm">{h.category.name}</Badge>
                       : <Text size="sm" c="dimmed">—</Text>}
                   </Table.Td>
-                  <Table.Td><Text size="sm" c="var(--naja-text)">{h.quantity}</Text></Table.Td>
+                  <Table.Td><Text size="sm">{h.quantity}</Text></Table.Td>
                   <Table.Td>
                     {h.location
-                      ? <Text size="sm" c="var(--naja-text)">{h.location}</Text>
+                      ? <Text size="sm">{h.location}</Text>
                       : <Text size="sm" c="dimmed">—</Text>}
                   </Table.Td>
-                  <Table.Td><Text size="sm" c="var(--naja-text)">{userName(h.held_by)}</Text></Table.Td>
-                  <Table.Td><Text size="sm" c="var(--naja-text)">{userName(h.added_by)}</Text></Table.Td>
+                  <Table.Td><Text size="sm">{userName(h.held_by)}</Text></Table.Td>
+                  <Table.Td><Text size="sm">{userName(h.added_by)}</Text></Table.Td>
                   <Table.Td>
                     {canActOnHolding(h) && !depleted && (
                       <Group gap={4} onClick={ev => ev.stopPropagation()}>
@@ -330,7 +328,7 @@ const MiscInventoryTable = () => {
           {addError && <Text size="sm" c="red">{addError}</Text>}
           <Group justify="flex-end" mt="xs">
             <Button variant="subtle" color="gray" onClick={closeAdd} disabled={addSubmitting}>Cancel</Button>
-            <Button variant="outline" color="najaGold" onClick={handleAdd} loading={addSubmitting}>Submit</Button>
+            <Button onClick={handleAdd} loading={addSubmitting}>Submit</Button>
           </Group>
         </Stack>
       </Modal>
@@ -347,32 +345,32 @@ const MiscInventoryTable = () => {
           <Stack gap="md">
             <Group gap="xl" wrap="wrap">
               <Stack gap={2}>
-                <Text size="xs" c="var(--naja-teal)" tt="uppercase" fw={700}>Category</Text>
-                <Text size="sm" c="var(--naja-text)">{selected.category?.name ?? '—'}</Text>
+                <Text size="xs" c="najaTeal" tt="uppercase" fw={700}>Category</Text>
+                <Text size="sm">{selected.category?.name ?? '—'}</Text>
               </Stack>
               <Stack gap={2}>
-                <Text size="xs" c="var(--naja-teal)" tt="uppercase" fw={700}>Quantity</Text>
-                <Text size="sm" c="var(--naja-text)">{selected.quantity}</Text>
+                <Text size="xs" c="najaTeal" tt="uppercase" fw={700}>Quantity</Text>
+                <Text size="sm">{selected.quantity}</Text>
               </Stack>
               <Stack gap={2}>
-                <Text size="xs" c="var(--naja-teal)" tt="uppercase" fw={700}>Location</Text>
-                <Text size="sm" c="var(--naja-text)">{selected.location ?? '—'}</Text>
+                <Text size="xs" c="najaTeal" tt="uppercase" fw={700}>Location</Text>
+                <Text size="sm">{selected.location ?? '—'}</Text>
               </Stack>
             </Group>
             <Group gap="xl">
               <Stack gap={2}>
-                <Text size="xs" c="var(--naja-teal)" tt="uppercase" fw={700}>Held By</Text>
-                <Text size="sm" c="var(--naja-text)">{userName(selected.held_by)}</Text>
+                <Text size="xs" c="najaTeal" tt="uppercase" fw={700}>Held By</Text>
+                <Text size="sm">{userName(selected.held_by)}</Text>
               </Stack>
               <Stack gap={2}>
-                <Text size="xs" c="var(--naja-teal)" tt="uppercase" fw={700}>Added By</Text>
-                <Text size="sm" c="var(--naja-text)">{userName(selected.added_by)}</Text>
+                <Text size="xs" c="najaTeal" tt="uppercase" fw={700}>Added By</Text>
+                <Text size="sm">{userName(selected.added_by)}</Text>
               </Stack>
             </Group>
 
             <Divider color="rgba(204,172,49,0.2)" />
 
-            <Text size="xs" c="var(--naja-teal)" tt="uppercase" fw={700}>Chain of Custody</Text>
+            <Text size="xs" c="najaTeal" tt="uppercase" fw={700}>Chain of Custody</Text>
             {evLoading ? (
               <Loader size="xs" color="najaGold" />
             ) : events.length === 0 ? (
@@ -381,7 +379,7 @@ const MiscInventoryTable = () => {
               <Stack gap={4}>
                 {events.map(ev => (
                   <Stack key={ev.id} gap={2}>
-                    <Text size="sm" c="var(--naja-text)">{eventLabel(ev)}</Text>
+                    <Text size="sm">{eventLabel(ev)}</Text>
                   </Stack>
                 ))}
               </Stack>
@@ -422,7 +420,7 @@ const MiscInventoryTable = () => {
           {txError && <Text size="sm" c="red">{txError}</Text>}
           <Group justify="flex-end" mt="xs">
             <Button variant="subtle" color="gray" onClick={closeTransfer} disabled={txSubmit}>Cancel</Button>
-            <Button variant="outline" color="najaGold" onClick={handleTransfer} loading={txSubmit}>Transfer</Button>
+            <Button onClick={handleTransfer} loading={txSubmit}>Transfer</Button>
           </Group>
         </Stack>
       </Modal>

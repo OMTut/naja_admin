@@ -9,7 +9,7 @@ import type { User, UserRole } from '../../types/user';
 import type { Role } from '../../types/role';
 import { userService } from '../../services/admin/userService';
 import { roleService } from '../../services/admin/roleService';
-import { drawerStyles, inputStyles } from '../../styles/mantine';
+import { drawerClassNames, inputStyles, displayRows } from '../../styles/mantine';
 import UserProfileDrawer from './UserProfileDrawer';
 
 const STATUS_OPTIONS = [
@@ -116,7 +116,7 @@ const UserManagement = () => {
     openProfile();
   };
 
-  if (loading) return <Text c="var(--naja-gold)">Loading users...</Text>;
+  if (loading) return <Text c="najaGold">Loading users...</Text>;
 
   return (
     <Stack gap="md">
@@ -125,19 +125,19 @@ const UserManagement = () => {
       {error && <Text c="red">{error}</Text>}
 
       {users.length === 0 ? (
-        <Text c="var(--naja-text)">No users found.</Text>
+        <Text>No users found.</Text>
       ) : (
         <Stack gap={0}>
           {/* ── Column headers (desktop only) ───────────────────────────────────── */}
-          <Group gap="md" px="sm" pb="xs" visibleFrom="sm" style={{ borderBottom: '1px solid rgba(204,172,49,0.3)' }}>
+          <Group gap="md" px="sm" pb="xs" visibleFrom="sm" style={displayRows.header}>
             <Box style={{ flex: 3 }}>
-              <Text size="xs" fw={700} tt="uppercase" c="var(--naja-gold)" style={{ letterSpacing: '0.05em' }}>User</Text>
+              <span className="naja-col-label">User</span>
             </Box>
             <Box style={{ flex: 2 }}>
-              <Text size="xs" fw={700} tt="uppercase" c="var(--naja-gold)" style={{ letterSpacing: '0.05em' }}>Status</Text>
+              <span className="naja-col-label">Status</span>
             </Box>
             <Box style={{ flex: 3 }}>
-              <Text size="xs" fw={700} tt="uppercase" c="var(--naja-gold)" style={{ letterSpacing: '0.05em' }}>Roles</Text>
+              <span className="naja-col-label">Roles</span>
             </Box>
             <Box style={{ width: 110 }} />
           </Group>
@@ -151,17 +151,13 @@ const UserManagement = () => {
               px="sm"
               py="xs"
               className="inventory-row"
-              style={{
-                backgroundColor: idx % 2 === 0 ? 'rgba(255,255,255,0.03)' : 'transparent',
-                borderRadius: 4,
-                cursor: 'pointer',
-              }}
+              style={{ ...displayRows.row(idx), cursor: 'pointer' }}
               onClick={() => startEdit(user)}
             >
               {/* Desktop layout */}
               <Group gap="md" align="center" wrap="nowrap" visibleFrom="sm">
                 <Box style={{ flex: 3, minWidth: 0 }}>
-                  <Text size="md" fw={600} c="var(--naja-text)" truncate>{displayName(user)}</Text>
+                  <Text size="md" fw={600} truncate>{displayName(user)}</Text>
                   <Text size="xs" c="dimmed" truncate>{user.discord_username}</Text>
                 </Box>
                 <Box style={{ flex: 2 }}>
@@ -188,7 +184,7 @@ const UserManagement = () => {
               {/* Mobile layout */}
               <Group gap="sm" align="center" wrap="nowrap" hiddenFrom="sm">
                 <Stack gap={2} style={{ flex: 1, minWidth: 0 }}>
-                  <Text size="md" fw={600} c="var(--naja-text)" truncate>{displayName(user)}</Text>
+                  <Text size="md" fw={600} truncate>{displayName(user)}</Text>
                   <Group gap="xs">
                     <Text size="xs" fw={600} style={{ color: statusColor(user.status) }}>
                       {user.status.charAt(0).toUpperCase() + user.status.slice(1)}
@@ -218,13 +214,13 @@ const UserManagement = () => {
         opened={editOpen}
         onClose={closeEdit}
         title={
-          <Text fw={700} c="var(--naja-gold)" tt="uppercase" size="md" style={{ letterSpacing: '0.05em' }}>
+          <Text fw={700} c="najaGold" tt="uppercase" size="md">
             {editingUser ? displayName(editingUser) : ''}
           </Text>
         }
         position="right"
         size="lg"
-        styles={drawerStyles}
+        classNames={drawerClassNames}
       >
         <Stack gap="md" pt="xs">
           <Select
@@ -241,7 +237,7 @@ const UserManagement = () => {
             onChange={setEditRoleIds}
             styles={inputStyles}
           />
-          <Text size="xs" c="var(--naja-teal)">
+          <Text size="xs" c="najaTeal">
             Roles are synced from Discord on each login and may be overwritten.
           </Text>
 
@@ -251,9 +247,9 @@ const UserManagement = () => {
 
           {confirmDelete ? (
             <Stack gap="xs">
-              <Text size="sm" c="var(--naja-text)">
+              <Text size="sm">
                 Delete{' '}
-                <Text span fw={700} c="var(--naja-gold)">
+                <Text span fw={700} c="najaGold">
                   {editingUser ? displayName(editingUser) : ''}
                 </Text>
                 ? This cannot be undone.
@@ -281,7 +277,7 @@ const UserManagement = () => {
               </Button>
               <Group gap="xs" justify="space-between">
                 <Button variant="subtle" color="gray" onClick={closeEdit} disabled={editSubmitting}>Cancel</Button>
-                <Button variant="outline" color="najaGold" onClick={handleSave} loading={editSubmitting}>Save</Button>
+                <Button onClick={handleSave} loading={editSubmitting}>Save</Button>
               </Group>
             </Group>
           )}

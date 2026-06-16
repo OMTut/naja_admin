@@ -5,7 +5,7 @@ import {
 } from '@mantine/core';
 import { useDisclosure } from '@mantine/hooks';
 import { IconPlus, IconTrash, IconCategory } from '@tabler/icons-react';
-import { drawerStyles, inputStyles } from '../../styles/mantine';
+import { drawerClassNames, inputStyles, displayRows } from '../../styles/mantine';
 import { miscInventoryService } from '../../services/inventory/miscInventoryService';
 import { CategorySelect } from '../inventory/CategorySelect';
 import InventoryCategoryManagement from './InventoryCategoryManagement';
@@ -148,10 +148,7 @@ const MiscInventoryManagement = () => {
       px="sm"
       py="xs"
       className={deleteId !== item.id ? 'inventory-row' : undefined}
-      style={{
-        backgroundColor: idx % 2 === 0 ? 'rgba(255,255,255,0.03)' : 'transparent',
-        borderRadius: 4,
-      }}
+      style={displayRows.row(idx)}
     >
       {deleteId === item.id ? (
         <Stack
@@ -160,13 +157,13 @@ const MiscInventoryManagement = () => {
         >
           {item.total_quantity > 0 ? (
             <Text size="sm" c="orange">
-              <Text span fw={700} c="var(--naja-gold)">{item.display_name}</Text> has{' '}
+              <Text span fw={700} c="najaGold">{item.display_name}</Text> has{' '}
               <Text span fw={700}>{item.total_quantity}</Text> unit{item.total_quantity !== 1 ? 's' : ''} held by members.
               All holdings must be transferred, consumed, or removed first.
             </Text>
           ) : (
-            <Text size="sm" c="var(--naja-text)">
-              Remove <Text span fw={700} c="var(--naja-gold)">{item.display_name}</Text>? This cannot be undone.
+            <Text size="sm">
+              Remove <Text span fw={700} c="najaGold">{item.display_name}</Text>? This cannot be undone.
             </Text>
           )}
           {deleteError && <Text size="xs" c="red">{deleteError}</Text>}
@@ -190,7 +187,7 @@ const MiscInventoryManagement = () => {
           style={{ cursor: 'pointer' }}
         >
           <Group>
-            <Text size="md" c="var(--naja-text)">{item.display_name}</Text>
+            <Text size="md">{item.display_name}</Text>
             {item.total_quantity > 0 && (
               <Text size="sm" c="dimmed">- Qty: {item.total_quantity}</Text>
             )}
@@ -210,7 +207,7 @@ const MiscInventoryManagement = () => {
     </Box>
   );
 
-  if (loading) return <Text c="var(--naja-gold)">Loading...</Text>;
+  if (loading) return <Text c="najaGold">Loading...</Text>;
 
   return (
     <Stack gap="lg">
@@ -220,13 +217,13 @@ const MiscInventoryManagement = () => {
         <Button variant="subtle" color="najaGold" leftSection={<IconCategory size={16} />} onClick={openCatDrawer}>
           Manage Categories
         </Button>
-        <Button variant="outline" color="najaGold" leftSection={<IconPlus size={16} />} onClick={openAdd}>
+        <Button leftSection={<IconPlus size={16} />} onClick={openAdd}>
           Add Item to Track
         </Button>
       </Group>
 
       {catalog.length === 0 ? (
-        <Text c="var(--naja-teal)">No items defined yet. Add items to track above.</Text>
+        <Text c="najaTeal">No items defined yet. Add items to track above.</Text>
       ) : (
         <Stack gap="xl">
           {/* ── Filter select ──────────────────────────────────────────────────── */}
@@ -260,7 +257,7 @@ const MiscInventoryManagement = () => {
             .map(({ cat, items }) => (
             <Stack key={cat.id} gap="xs">
               <Group gap="xs" align="center">
-                <Text size="lg" fw={700} tt="uppercase" c="var(--naja-gold)" style={{ letterSpacing: '0.05em' }}>
+                <Text size="lg" fw={700} tt="uppercase" c="najaGold" style={{ letterSpacing: '0.05em' }}>
                   {cat.name}
                 </Text>
                 <Divider flex={1} color="rgba(204,172,49,0.15)" />
@@ -274,9 +271,7 @@ const MiscInventoryManagement = () => {
           {uncategorized.length > 0 && (activeFilter === null || activeFilter === 'uncategorized') && (
             <Stack gap="xs">
               <Group gap="xs" align="center">
-                <Text size="xs" fw={700} tt="uppercase" c="var(--naja-teal)" style={{ letterSpacing: '0.05em' }}>
-                  Uncategorized
-                </Text>
+                <span className="naja-col-label">Uncategorized</span>
                 <Divider flex={1} color="rgba(204,172,49,0.15)" />
               </Group>
               <Stack gap={0}>
@@ -291,10 +286,10 @@ const MiscInventoryManagement = () => {
       <Drawer
         opened={addOpen}
         onClose={closeAdd}
-        title={<Text fw={700} c="var(--naja-gold)" tt="uppercase" size="md" style={{ letterSpacing: '0.05em' }}>Add Item to Track</Text>}
+        title={<Text fw={700} c="najaGold" tt="uppercase" size="md">Add Item to Track</Text>}
         position="right"
         size="lg"
-        styles={drawerStyles}
+        classNames={drawerClassNames}
       >
         <Stack gap="sm" pt="xs">
           <TextInput
@@ -316,7 +311,7 @@ const MiscInventoryManagement = () => {
           {addError && <Text size="sm" c="red">{addError}</Text>}
           <Group justify="flex-end" mt="xs">
             <Button variant="subtle" color="gray" onClick={closeAdd} disabled={addSubmitting}>Cancel</Button>
-            <Button variant="outline" color="najaGold" onClick={handleAdd} loading={addSubmitting}>Add</Button>
+            <Button onClick={handleAdd} loading={addSubmitting}>Add</Button>
           </Group>
         </Stack>
       </Drawer>
@@ -325,10 +320,10 @@ const MiscInventoryManagement = () => {
       <Drawer
         opened={editOpen}
         onClose={cancelEdit}
-        title={<Text fw={700} c="var(--naja-gold)" tt="uppercase" size="md" style={{ letterSpacing: '0.05em' }}>Edit Item</Text>}
+        title={<Text fw={700} c="najaGold" tt="uppercase" size="md">Edit Item</Text>}
         position="right"
         size="lg"
-        styles={drawerStyles}
+        classNames={drawerClassNames}
       >
         <Stack gap="sm" pt="xs">
           <TextInput
@@ -348,7 +343,7 @@ const MiscInventoryManagement = () => {
           {editError && <Text size="sm" c="red">{editError}</Text>}
           <Group justify="flex-end" mt="xs">
             <Button variant="subtle" color="gray" onClick={cancelEdit} disabled={editSubmit}>Cancel</Button>
-            <Button variant="outline" color="najaGold" onClick={handleEdit} loading={editSubmit}>Save</Button>
+            <Button onClick={handleEdit} loading={editSubmit}>Save</Button>
           </Group>
         </Stack>
       </Drawer>

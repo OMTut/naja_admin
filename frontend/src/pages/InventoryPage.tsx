@@ -40,7 +40,7 @@ const InventoryPage = () => {
   return (
     <Stack gap="lg">
       <Stack gap="xs">
-        <Text size="s" tt="uppercase" fw={700} c="var(--naja-text)" style={{ letterSpacing: '0.05em' }}>
+        <Text size="s" tt="uppercase" fw={700} style={{ letterSpacing: '0.05em' }}>
           Miscellaneous Items
         </Text>
         <SimpleGrid cols={{ base: 2, sm: 4, lg: 4 }}>

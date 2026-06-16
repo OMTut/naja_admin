@@ -1,0 +1,81 @@
+.naja-drawer-content {
+  background-color: var(--naja-sidebar);
+  border-left: 1px solid rgba(204, 172, 49, 0.3);
+}
+
+.naja-drawer-header {
+  background-color: var(--naja-sidebar);
+  border-bottom: 1px solid rgba(204, 172, 49, 0.2);
+}
+
+.naja-drawer-title {
+  color: var(--naja-text);
+  font-size: 1rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.naja-drawer-close {
+  color: var(--naja-gold);
+}
+
+.naja-list-item {
+  color: var(--naja-text);
+}
+
+.naja-detail-empty {
+  font-size: 0.875rem;
+  color: var(--mantine-color-dimmed);
+}
+
+.naja-status-offline {
+  font-size: 0.75rem;
+  color: var(--naja-teal);
+}
+
+.naja-drawer-error {
+  color: var(--mantine-color-red-6);
+}
+
+.naja-detail-label {
+  
+  font-weight: 600;
+  color: var(--mantine-color-najaGoldAlt-7);
+  font-size: 0.875rem;
+}
+
+.naja-detail-value {
+  font-size: 0.875rem;
+  color: var(--mantine-color-najaText-6);
+}
+
+.naja-catalog-text {
+  font-size: 0.875rem;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.naja-catalog-empty {
+  font-size: 0.875rem;
+  color: var(--naja-teal);
+  text-align: center;
+}
+
+.naja-col-label {
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--mantine-color-najaGold-6);
+}
+
+.naja-detail-ingredient-list {
+  color: var(--mantine-color-najaText);
+}
+
+.naja-remove-btn {
+  --button-bg: var(--mantine-color-najaGold-8);
+  --button-hover: var(--mantine-color-red-6) !important;
+}

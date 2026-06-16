@@ -119,7 +119,7 @@ const ResourceInventoryTable = () => {
     }
   };
 
-  if (loading) return <Text c="var(--naja-gold)">Loading inventory...</Text>;
+  if (loading) return <Text c="najaGold">Loading inventory...</Text>;
 
   return (
     <Stack gap="lg">
@@ -137,7 +137,7 @@ const ResourceInventoryTable = () => {
       </Group>
 
       {entries.length === 0 ? (
-        <Text c="var(--naja-teal)">No inventory entries yet.</Text>
+        <Text c="najaTeal">No inventory entries yet.</Text>
       ) : (
         <Table striped highlightOnHover styles={tableStyles}>
           <Table.Thead>
@@ -162,22 +162,22 @@ const ResourceInventoryTable = () => {
                   <Table.Td>{e.ore_name}</Table.Td>
                   <Table.Td>
                     {e.quality != null
-                      ? <Text size="sm" c="var(--naja-text)">{e.quality}</Text>
+                      ? <Text size="sm">{e.quality}</Text>
                       : <Text size="sm" c="dimmed">—</Text>}
                   </Table.Td>
                   <Table.Td>
-                    <Text size="sm" c={depleted ? 'dimmed' : 'var(--naja-text)'}>
+                    <Text size="sm" c={depleted ? 'dimmed' : 'najaText'}>
                       {Number(e.current_scu).toFixed(3)} / {Number(e.original_scu).toFixed(3)}
                       {depleted && <Text span size="xs" c="dimmed"> (depleted)</Text>}
                     </Text>
                   </Table.Td>
                   <Table.Td>
                     {e.location
-                      ? <Text size="sm" c="var(--naja-text)">{e.location}</Text>
+                      ? <Text size="sm">{e.location}</Text>
                       : <Text size="sm" c="dimmed">—</Text>}
                   </Table.Td>
-                  <Table.Td><Text size="sm" c="var(--naja-text)">{userName(e.held_by)}</Text></Table.Td>
-                  <Table.Td><Text size="sm" c="var(--naja-text)">{userName(e.added_by)}</Text></Table.Td>
+                  <Table.Td><Text size="sm">{userName(e.held_by)}</Text></Table.Td>
+                  <Table.Td><Text size="sm">{userName(e.added_by)}</Text></Table.Td>
                 </Table.Tr>
               );
             })}
@@ -232,7 +232,7 @@ const ResourceInventoryTable = () => {
           {addError && <Text size="sm" c="red">{addError}</Text>}
           <Group justify="flex-end" mt="xs">
             <Button variant="subtle" color="gray" onClick={closeAdd} disabled={addSubmitting}>Cancel</Button>
-            <Button variant="outline" color="najaGold" onClick={handleAdd} loading={addSubmitting}>Add</Button>
+            <Button onClick={handleAdd} loading={addSubmitting}>Add</Button>
           </Group>
         </Stack>
       </Modal>
@@ -249,11 +249,11 @@ const ResourceInventoryTable = () => {
           <Stack gap="md">
             <Group gap="xl">
               <Stack gap={2}>
-                <Text size="xs" c="var(--naja-teal)" tt="uppercase" fw={700}>Original SCU</Text>
-                <Text size="sm" c="var(--naja-text)">{Number(selected.original_scu).toFixed(3)}</Text>
+                <Text size="xs" c="najaTeal" tt="uppercase" fw={700}>Original SCU</Text>
+                <Text size="sm">{Number(selected.original_scu).toFixed(3)}</Text>
               </Stack>
               <Stack gap={2}>
-                <Text size="xs" c="var(--naja-teal)" tt="uppercase" fw={700}>Current SCU</Text>
+                <Text size="xs" c="najaTeal" tt="uppercase" fw={700}>Current SCU</Text>
                 {editing
                   ? <NumberInput
                       size="xs"
@@ -263,14 +263,14 @@ const ResourceInventoryTable = () => {
                       onChange={setEditCurrentScu}
                       styles={inputStyles}
                     />
-                  : <Text size="sm" c={Number(selected.current_scu) <= 0 ? 'dimmed' : 'var(--naja-text)'}>
+                  : <Text size="sm" c={Number(selected.current_scu) <= 0 ? 'dimmed' : 'najaText'}>
                       {Number(selected.current_scu).toFixed(3)}
                       {Number(selected.current_scu) <= 0 && ' (depleted)'}
                     </Text>
                 }
               </Stack>
               <Stack gap={2}>
-                <Text size="xs" c="var(--naja-teal)" tt="uppercase" fw={700}>Quality</Text>
+                <Text size="xs" c="najaTeal" tt="uppercase" fw={700}>Quality</Text>
                 {editing
                   ? <NumberInput
                       size="xs"
@@ -281,13 +281,13 @@ const ResourceInventoryTable = () => {
                       onChange={setEditQuality}
                       styles={inputStyles}
                     />
-                  : <Text size="sm" c="var(--naja-text)">{selected.quality ?? '—'}</Text>
+                  : <Text size="sm">{selected.quality ?? '—'}</Text>
                 }
               </Stack>
             </Group>
 
             <Stack gap={2}>
-              <Text size="xs" c="var(--naja-teal)" tt="uppercase" fw={700}>Location</Text>
+              <Text size="xs" c="najaTeal" tt="uppercase" fw={700}>Location</Text>
               {editing
                 ? <TextInput
                     size="xs"
@@ -296,18 +296,18 @@ const ResourceInventoryTable = () => {
                     onChange={e => setEditLocation(e.currentTarget.value)}
                     styles={inputStyles}
                   />
-                : <Text size="sm" c="var(--naja-text)">{selected.location ?? '—'}</Text>
+                : <Text size="sm">{selected.location ?? '—'}</Text>
               }
             </Stack>
 
             <Group gap="xl">
               <Stack gap={2}>
-                <Text size="xs" c="var(--naja-teal)" tt="uppercase" fw={700}>Held By</Text>
-                <Text size="sm" c="var(--naja-text)">{userName(selected.held_by)}</Text>
+                <Text size="xs" c="najaTeal" tt="uppercase" fw={700}>Held By</Text>
+                <Text size="sm">{userName(selected.held_by)}</Text>
               </Stack>
               <Stack gap={2}>
-                <Text size="xs" c="var(--naja-teal)" tt="uppercase" fw={700}>Added By</Text>
-                <Text size="sm" c="var(--naja-text)">{userName(selected.added_by)}</Text>
+                <Text size="xs" c="najaTeal" tt="uppercase" fw={700}>Added By</Text>
+                <Text size="sm">{userName(selected.added_by)}</Text>
               </Stack>
             </Group>
 
@@ -318,10 +318,10 @@ const ResourceInventoryTable = () => {
                 {editing ? (
                   <>
                     <Button variant="subtle" color="gray" onClick={() => setEditing(false)} disabled={editSubmitting}>Cancel</Button>
-                    <Button variant="outline" color="najaGold" onClick={handleEditSave} loading={editSubmitting}>Save</Button>
+                    <Button onClick={handleEditSave} loading={editSubmitting}>Save</Button>
                   </>
                 ) : (
-                  <Button variant="outline" color="najaGold" onClick={() => setEditing(true)}>Edit</Button>
+                  <Button onClick={() => setEditing(true)}>Edit</Button>
                 )}
               </Group>
             )}

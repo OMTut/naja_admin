@@ -63,16 +63,16 @@ const HomePageAdmin = () => {
           <Divider flex={1} color="rgba(204,172,49,0.15)" />
         </Group>
         <Group gap="lg">
-          <Button variant="outline" color="najaGold" onClick={() => navigate('/admin/roles')}>
+          <Button onClick={() => navigate('/admin/roles')}>
             Manage Roles
           </Button>
-          <Button variant="outline" color="najaGold" onClick={() => navigate('/admin/users')}>
+          <Button onClick={() => navigate('/admin/users')}>
             Manage Users
           </Button>
-          <Button variant="outline" color="najaGold" onClick={() => navigate('/admin/inventory')}>
+          <Button onClick={() => navigate('/admin/inventory')}>
             Manage Inventory
           </Button>
-          <Button variant="outline" color="najaGold" onClick={() => navigate('/admin/permissions')}>
+          <Button onClick={() => navigate('/admin/permissions')}>
             Manage Permissions
           </Button>
         </Group>
@@ -94,7 +94,7 @@ const HomePageAdmin = () => {
           >
             Sync Blueprints
           </Button>
-          {syncMsg   && <Text size="sm" c="var(--naja-teal)">{syncMsg}</Text>}
+          {syncMsg   && <Text size="sm" c="najaTeal">{syncMsg}</Text>}
           {syncError && <Text size="sm" c="red">{syncError}</Text>}
           <Button
             variant="outline"
@@ -105,7 +105,7 @@ const HomePageAdmin = () => {
           >
             Sync Ores
           </Button>
-          {syncOresMsg   && <Text size="sm" c="var(--naja-teal)">{syncOresMsg}</Text>}
+          {syncOresMsg   && <Text size="sm" c="najaTeal">{syncOresMsg}</Text>}
           {syncOresError && <Text size="sm" c="red">{syncOresError}</Text>}
         </Group>
       </Stack>

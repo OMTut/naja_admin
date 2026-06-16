@@ -1,17 +1,12 @@
 import { useState, useEffect } from 'react';
-import {
-  Stack, Group, Text, Table,
-  Modal, Loader, List,
-} from '@mantine/core';
+import { Stack, Group, Text, Box } from '@mantine/core';
 import { useDisclosure } from '@mantine/hooks';
 import { IconUsers } from '@tabler/icons-react';
-import { tableStyles, modalStyles } from '../../styles/mantine';
+import BlueprintDetailDrawer from '../blueprints/BlueprintDetailDrawer';
+import { displayRows, blueprintCols } from '../../styles/mantine';
 import { blueprintService } from '../../services/admin/blueprintService';
 import type { OrgBlueprint, BlueprintDetail, ItemCategory } from '../../types/blueprint';
 import { matchesCategory } from '../../utils/categoryFilters';
-
-const displayName = (u: { server_nickname: string | null; global_name: string | null; discord_username: string }) =>
-  u.server_nickname ?? u.global_name ?? u.discord_username;
 
 interface BlueprintManagementProps {
   search?: string;
@@ -56,7 +51,7 @@ const BlueprintManagement = ({ search = '', categoryFilter = null, sizeFilter = 
     return matchesCategory(b, categoryFilter, sizeFilter) && matchesSearch;
   });
 
-  if (loading) return <Text c="var(--naja-gold)">Loading org blueprints...</Text>;
+  if (loading) return <Text c="najaGold">Loading org blueprints...</Text>;
 
   return (
     <Stack gap="lg">
@@ -64,109 +59,58 @@ const BlueprintManagement = ({ search = '', categoryFilter = null, sizeFilter = 
       {error && <Text c="red">{error}</Text>}
 
       {filtered.length === 0 ? (
-        <Text c="var(--naja-teal)">
+        <Text c="najaTeal">
           {orgBlueprints.length === 0
             ? 'No blueprints owned by any org member yet.'
             : 'No blueprints match your filters.'}
         </Text>
       ) : (
-        <Table striped highlightOnHover styles={tableStyles}>
-          <Table.Thead>
-            <Table.Tr>
-              <Table.Th>Blueprint</Table.Th>
-              <Table.Th>Category</Table.Th>
-              <Table.Th>Members</Table.Th>
-            </Table.Tr>
-          </Table.Thead>
-          <Table.Tbody>
-            {filtered.map(bp => (
-              <Table.Tr
-                key={bp.uuid}
-                onClick={() => handleViewDetail(bp.uuid)}
-                style={{ cursor: 'pointer' }}
-              >
-                <Table.Td>{bp.output_name ?? bp.key ?? bp.uuid}</Table.Td>
-                <Table.Td>
-                  {bp.category_label
-                    ? <Text size="sm" c="var(--naja-text)">{bp.category_label}</Text>
-                    : <Text size="xs" c="dimmed">—</Text>}
-                </Table.Td>
-                <Table.Td>
-                  <Group gap="xs">
-                    <IconUsers size={14} color="var(--naja-gold)" />
-                    <Text size="sm" c="var(--naja-gold)">{bp.owner_count}</Text>
-                  </Group>
-                </Table.Td>
-              </Table.Tr>
+        <Stack gap={0}>
+          <Group gap="md" px="sm" pb="xs" style={displayRows.header}>
+            {blueprintCols.org.map(col => (
+              <Box key={col.label} style={{ flex: col.flex }}>
+                <span className="naja-col-label">{col.label}</span>
+              </Box>
             ))}
-          </Table.Tbody>
-        </Table>
+          </Group>
+          <Stack gap={0}>
+            {filtered.map((bp, idx) => (
+              <Box
+                key={bp.uuid}
+                px="sm"
+                py="xs"
+                className="inventory-row"
+                style={displayRows.row(idx)}
+              >
+                <Group gap="md" align="center" wrap="nowrap" onClick={() => handleViewDetail(bp.uuid)} style={{ cursor: 'pointer' }}>
+                  <Box style={{ flex: 4, minWidth: 0 }}>
+                    <Text size="md" truncate>{bp.output_name ?? bp.key ?? bp.uuid}</Text>
+                  </Box>
+                  <Box style={{ flex: 2, minWidth: 0 }}>
+                    {bp.category_label
+                      ? <Text size="sm" c="najaText.8" truncate>{bp.category_label}</Text>
+                      : <Text size="sm" c="dimmed">—</Text>}
+                  </Box>
+                  <Box style={{ flex: 1 }}>
+                    <Group gap="xs">
+                      <IconUsers size={14} color="var(--naja-gold-alt)" />
+                      <Text size="sm" c="najaGoldAlt.7">{bp.owner_count}</Text>
+                    </Group>
+                  </Box>
+                </Group>
+              </Box>
+            ))}
+          </Stack>
+        </Stack>
       )}
 
-      <Modal
+      <BlueprintDetailDrawer
         opened={detailOpen}
         onClose={closeDetail}
-        title={selectedBp?.output_name ?? 'Blueprint Detail'}
-        size="lg"
-        styles={modalStyles}
-      >
-        {detailLoading && <Group justify="center" p="md"><Loader color="najaGold" size="sm" /></Group>}
-        {detailError && <Text c="red">{detailError}</Text>}
-        {selectedBp && !detailLoading && (
-          <Stack gap="md">
-            <Group gap="xl">
-              {selectedBp.category_label && (
-                <Stack gap={2}>
-                  <Text size="xs" c="var(--naja-teal)" tt="uppercase" fw={700}>Category</Text>
-                  <Text size="sm" c="var(--naja-text)">{selectedBp.category_label}</Text>
-                </Stack>
-              )}
-              {selectedBp.craft_time_label && (
-                <Stack gap={2}>
-                  <Text size="xs" c="var(--naja-teal)" tt="uppercase" fw={700}>Craft Time</Text>
-                  <Text size="sm" c="var(--naja-text)">{selectedBp.craft_time_label}</Text>
-                </Stack>
-              )}
-              {selectedBp.ingredient_count != null && (
-                <Stack gap={2}>
-                  <Text size="xs" c="var(--naja-teal)" tt="uppercase" fw={700}>Ingredients</Text>
-                  <Text size="sm" c="var(--naja-text)">{selectedBp.ingredient_count}</Text>
-                </Stack>
-              )}
-            </Group>
-
-            <Stack gap={4}>
-              <Text size="xs" c="var(--naja-teal)" tt="uppercase" fw={700}>Org Owners ({selectedBp.owners.length})</Text>
-              {selectedBp.owners.length === 0 ? (
-                <Text size="sm" c="dimmed">None</Text>
-              ) : (
-                <Text size="sm" c="var(--naja-text)">
-                  {selectedBp.owners.map(displayName).join(', ')}
-                </Text>
-              )}
-            </Stack>
-
-            {selectedBp.ingredients && selectedBp.ingredients.length > 0 && (
-              <Stack gap={4}>
-                <Text size="xs" c="var(--naja-teal)" tt="uppercase" fw={700}>Ingredients</Text>
-                <List size="sm" spacing={2}>
-                  {selectedBp.ingredients.map((ing, i) => (
-                    <List.Item key={i} style={{ color: 'var(--naja-text)' }}>
-                      {ing.name}
-                      {ing.quantity_scu != null && ` — ${ing.quantity_scu} SCU`}
-                      {ing.quantity != null && ing.quantity_scu == null && ` × ${ing.quantity}`}
-                    </List.Item>
-                  ))}
-                </List>
-              </Stack>
-            )}
-
-            {selectedBp.ingredients === null && (
-              <Text size="xs" c="var(--naja-teal)">Ingredient data unavailable (SC_Data offline).</Text>
-            )}
-          </Stack>
-        )}
-      </Modal>
+        blueprint={selectedBp}
+        loading={detailLoading}
+        error={detailError}
+      />
     </Stack>
   );
 };

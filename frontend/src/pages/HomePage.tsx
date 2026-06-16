@@ -54,12 +54,12 @@ const HomePage = () => {
         onMouseLeave={e => (e.currentTarget.style.borderColor = 'rgba(204, 172, 49, 0.2)')}
       >
         <Group justify="space-between" align="flex-start">
-          <Text size="xs" c="var(--naja-text)" tt="uppercase" fw={700}>
+          <Text size="xs" tt="uppercase" fw={700}>
             {stat.title}
           </Text>
           <Icon size={22} color="var(--naja-gold-alt)" stroke={1.5} />
         </Group>
-        <Text size="42px" fw={700} c="var(--naja-gold-alt)" mt="sm">
+        <Text size="42px" fw={700} c="najaGoldAlt" mt="sm">
           {counts ? counts[stat.key] : '—'}
         </Text>
       </Paper>
@@ -70,7 +70,7 @@ const HomePage = () => {
     <Stack gap="lg">
 
       <Stack gap="xs">
-        <Text size="s" tt="uppercase" fw={700} c="var(--naja-text)" style={{ letterSpacing: '0.05em' }}>
+        <Text size="s" tt="uppercase" fw={700} style={{ letterSpacing: '0.05em' }}>
           Org Blueprints Available
         </Text>
         <SimpleGrid cols={{ base: 2, sm: 4, lg: 4 }}>

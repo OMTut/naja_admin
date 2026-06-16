@@ -2,7 +2,7 @@ import { Group, Burger, Text, ActionIcon, Tooltip, Menu } from '@mantine/core';
 import { IconSettings, IconBell, IconUser, IconLogout, IconUserCircle } from '@tabler/icons-react';
 import MainLogo from './MainLogo';
 import { useAuth } from '../../hooks';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 
 interface TopBarProps {
   opened: boolean;
@@ -36,6 +36,8 @@ const menuStyles = {
 const TopBar = ({ opened, toggle }: TopBarProps) => {
   const { logout } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
+  const isAdmin = location.pathname.startsWith('/admin');
 
   const handleLogout = async () => {
     await logout();
@@ -47,9 +49,11 @@ const TopBar = ({ opened, toggle }: TopBarProps) => {
       <Group gap="md">
         <Burger opened={opened} onClick={toggle} hiddenFrom="sm" size="sm" color="#CCAC31" />
         <MainLogo />
-        <Text c="#CCAC31" size="md" style={{ fontFamily: "'Vollkorn', serif", letterSpacing: '0.03em' }}>
-          ~/admin
-        </Text>
+        {isAdmin && (
+          <Text c="#CCAC31" size="md" style={{ fontFamily: "'Vollkorn', serif", letterSpacing: '0.03em' }}>
+            ~/admin
+          </Text>
+        )}
       </Group>
 
       <Group gap="xs">

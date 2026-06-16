@@ -6,7 +6,7 @@ import {
 import { IconBrandDiscord, IconRefresh } from '@tabler/icons-react';
 import { userService } from '../../services/admin/userService';
 import { useAuth } from '../../hooks';
-import { drawerStyles, inputStyles } from '../../styles/mantine';
+import { drawerClassNames, inputStyles } from '../../styles/mantine';
 import type { User } from '../../types/user';
 
 const STATUS_BADGE_COLORS: Record<string, string> = {
@@ -68,13 +68,13 @@ const UserProfileDrawer = ({ opened, onClose, userId }: Props) => {
       opened={opened}
       onClose={onClose}
       title={
-        <Text fw={700} c="var(--naja-gold)" tt="uppercase" size="md" style={{ letterSpacing: '0.05em' }}>
+        <Text fw={700} c="najaGold" tt="uppercase" size="md">
           {profile ? (profile.server_nickname || profile.global_name || profile.discord_username) : 'Profile'}
         </Text>
       }
       position="right"
       size="lg"
-      styles={drawerStyles}
+      classNames={drawerClassNames}
     >
       {loading ? (
         <Loader size="sm" color="najaGold" mt="md" />
@@ -86,7 +86,7 @@ const UserProfileDrawer = ({ opened, onClose, userId }: Props) => {
             <Avatar size={64} radius="md" color="najaGold">{initials}</Avatar>
             <Stack gap={4}>
               <Group gap="sm" align="center">
-                <Text size="lg" fw={700} c="var(--naja-text)">
+                <Text size="lg" fw={700}>
                   {profile.global_name || profile.discord_username}
                 </Text>
                 <Badge color={STATUS_BADGE_COLORS[profile.status] || 'gray'} variant="filled" size="sm">
@@ -108,7 +108,7 @@ const UserProfileDrawer = ({ opened, onClose, userId }: Props) => {
           <TextInput label="Server Nickname" value={profile.server_nickname  || '—'} disabled styles={inputStyles} />
           <TextInput label="Email"           value={profile.email            || '—'} disabled styles={inputStyles} />
 
-          <Text size="xs" c="var(--naja-teal)">
+          <Text size="xs" c="najaTeal">
             All fields above are sourced from Discord and refreshed on each login.
           </Text>
 
@@ -116,8 +116,6 @@ const UserProfileDrawer = ({ opened, onClose, userId }: Props) => {
 
           {isAppAdmin && (
             <Button
-              variant="outline"
-              color="najaGold"
               size="compact-sm"
               leftSection={<IconRefresh size={14} />}
               loading={resyncing}

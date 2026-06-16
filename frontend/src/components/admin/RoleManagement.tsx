@@ -5,7 +5,7 @@ import {
 } from '@mantine/core';
 import { useDisclosure } from '@mantine/hooks';
 import { IconPlus, IconTrash } from '@tabler/icons-react';
-import { drawerStyles, inputStyles } from '../../styles/mantine';
+import { drawerClassNames, inputStyles, displayRows } from '../../styles/mantine';
 import type { Role, RoleCreate, RoleUpdate } from '../../types/role';
 import { roleService } from '../../services/admin/roleService';
 
@@ -151,15 +151,12 @@ const RoleManagement = () => {
       px="sm"
       py="xs"
       className={deleteId !== role.role_id ? 'inventory-row' : undefined}
-      style={{
-        backgroundColor: idx % 2 === 0 ? 'rgba(255,255,255,0.03)' : 'transparent',
-        borderRadius: 4,
-      }}
+      style={displayRows.row(idx)}
     >
       {deleteId === role.role_id ? (
         <Stack gap={6} onBlur={e => { if (!e.currentTarget.contains(e.relatedTarget)) cancelDelete(); }}>
-          <Text size="sm" c="var(--naja-text)">
-            Remove <Text span fw={500} c="var(--naja-gold)">{role.role_name}</Text>? This cannot be undone.
+          <Text size="sm">
+            Remove <Text span fw={500} c="najaGold">{role.role_name}</Text>? This cannot be undone.
           </Text>
           {deleteError && <Text size="xs" c="red">{deleteError}</Text>}
           <Group gap="xs">
@@ -174,7 +171,7 @@ const RoleManagement = () => {
       ) : (
         <Group gap="md" align="center" wrap="nowrap" onClick={() => startEdit(role)} style={{ cursor: 'pointer' }}>
           <Box style={{ flex: 3, minWidth: 0 }}>
-            <Text size="md" c="var(--naja-text)" truncate>{role.role_name}</Text>
+            <Text size="md" truncate>{role.role_name}</Text>
             {role.role_description && (
               <Text size="xs" c="dimmed" truncate>{role.role_description}</Text>
             )}
@@ -205,7 +202,7 @@ const RoleManagement = () => {
     <Stack gap="lg">
       <Group justify="space-between" align="center">
         <h1 style={{ margin: 0 }}>Role Management</h1>
-        <Button variant="outline" color="najaGold" leftSection={<IconPlus size={16} />} onClick={openAdd}>
+        <Button leftSection={<IconPlus size={16} />} onClick={openAdd}>
           Create Role
         </Button>
       </Group>
@@ -228,15 +225,15 @@ const RoleManagement = () => {
       )}
 
       {roles.length === 0 ? (
-        <Text c="var(--naja-teal)">No roles found. Create one to get started.</Text>
+        <Text c="najaTeal">No roles found. Create one to get started.</Text>
       ) : (
         <Stack gap="xl">
-          <Group gap="md" px="sm" pb="xs" style={{ borderBottom: '1px solid rgba(204,172,49,0.3)' }}>
+          <Group gap="md" px="sm" pb="xs" style={displayRows.header}>
             <Box style={{ flex: 3 }}>
-              <Text size="xs" fw={700} tt="uppercase" c="var(--naja-gold)" style={{ letterSpacing: '0.05em' }}>Name</Text>
+              <span className="naja-col-label">Name</span>
             </Box>
             <Box style={{ flex: 3 }}>
-              <Text size="xs" fw={700} tt="uppercase" c="var(--naja-gold)" style={{ letterSpacing: '0.05em' }}>Grants</Text>
+              <span className="naja-col-label">Grants</span>
             </Box>
             <Box style={{ width: 40 }} />
           </Group>
@@ -244,7 +241,7 @@ const RoleManagement = () => {
           {showDiscord && discordRoles.length > 0 && (
             <Stack gap="xs">
               <Group gap="xs" align="center">
-                <Text size="lg" fw={700} tt="uppercase" c="var(--naja-gold)" style={{ letterSpacing: '0.05em' }}>
+                <Text size="lg" fw={700} tt="uppercase" c="najaGold" style={{ letterSpacing: '0.05em' }}>
                   Discord Roles
                 </Text>
                 <Divider flex={1} color="rgba(204,172,49,0.15)" />
@@ -258,7 +255,7 @@ const RoleManagement = () => {
           {showApp && appRoles.length > 0 && (
             <Stack gap="xs">
               <Group gap="xs" align="center">
-                <Text size="lg" fw={700} tt="uppercase" c="var(--naja-gold)" style={{ letterSpacing: '0.05em' }}>
+                <Text size="lg" fw={700} tt="uppercase" c="najaGold" style={{ letterSpacing: '0.05em' }}>
                   Application Roles
                 </Text>
                 <Divider flex={1} color="rgba(204,172,49,0.15)" />
@@ -275,10 +272,10 @@ const RoleManagement = () => {
       <Drawer
         opened={addOpen}
         onClose={closeAdd}
-        title={<Text fw={700} c="var(--naja-gold)" tt="uppercase" size="md" style={{ letterSpacing: '0.05em' }}>Create Role</Text>}
+        title={<Text fw={700} c="najaGold" tt="uppercase" size="md">Create Role</Text>}
         position="right"
         size="lg"
-        styles={drawerStyles}
+        classNames={drawerClassNames}
       >
         <form onSubmit={handleAdd}>
           <Stack gap="sm" pt="xs">
@@ -318,7 +315,7 @@ const RoleManagement = () => {
             {addError && <Text size="sm" c="red">{addError}</Text>}
             <Group justify="flex-end" mt="xs">
               <Button variant="subtle" color="gray" onClick={closeAdd} disabled={addSubmitting}>Cancel</Button>
-              <Button type="submit" variant="outline" color="najaGold" loading={addSubmitting}>Create</Button>
+              <Button type="submit" loading={addSubmitting}>Create</Button>
             </Group>
           </Stack>
         </form>
@@ -329,13 +326,13 @@ const RoleManagement = () => {
         opened={editOpen}
         onClose={closeEdit}
         title={
-          <Text fw={700} c="var(--naja-gold)" tt="uppercase" size="md" style={{ letterSpacing: '0.05em' }}>
+          <Text fw={700} c="najaGold" tt="uppercase" size="md">
             {editingRole?.role_name || 'Edit Role'}
           </Text>
         }
         position="right"
         size="lg"
-        styles={drawerStyles}
+        classNames={drawerClassNames}
       >
         <form onSubmit={handleEdit}>
           <Stack gap="sm" pt="xs">
@@ -376,7 +373,7 @@ const RoleManagement = () => {
             {editError && <Text size="sm" c="red">{editError}</Text>}
             <Group justify="flex-end" mt="xs">
               <Button variant="subtle" color="gray" onClick={closeEdit} disabled={editSubmit}>Cancel</Button>
-              <Button type="submit" variant="outline" color="najaGold" loading={editSubmit}>Save</Button>
+              <Button type="submit" loading={editSubmit}>Save</Button>
             </Group>
           </Stack>
         </form>

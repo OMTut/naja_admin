@@ -4,7 +4,7 @@ import {
   Divider, Loader, Badge, Box,
 } from '@mantine/core';
 import { IconPlus, IconTrash, IconCheck, IconX } from '@tabler/icons-react';
-import { drawerStyles, inputStyles } from '../../styles/mantine';
+import { drawerClassNames, inputStyles, displayRows } from '../../styles/mantine';
 import { miscInventoryService } from '../../services/inventory/miscInventoryService';
 import type { MiscCategory } from '../../types/inventory';
 
@@ -115,10 +115,10 @@ const InventoryCategoryManagement = ({ opened, onClose, onCategoryChange }: Prop
     <Drawer
       opened={opened}
       onClose={() => { onClose(); onCategoryChange(); }}
-      title={<Text fw={700} c="var(--naja-gold)" tt="uppercase" size="md" style={{ letterSpacing: '0.05em' }}>Manage Inventory Categories</Text>}
+      title={<Text fw={700} c="najaGold" tt="uppercase" size="md">Manage Inventory Categories</Text>}
       position="right"
       size="lg"
-      styles={drawerStyles}
+      classNames={drawerClassNames}
     >
       <Stack gap="lg" pt="xs">
 
@@ -134,8 +134,6 @@ const InventoryCategoryManagement = ({ opened, onClose, onCategoryChange }: Prop
               style={{ flex: 1 }}
             />
             <Button
-              variant="outline"
-              color="najaGold"
               leftSection={<IconPlus size={14} />}
               onClick={handleAdd}
               loading={addSubmit}
@@ -163,12 +161,7 @@ const InventoryCategoryManagement = ({ opened, onClose, onCategoryChange }: Prop
                 px="sm"
                 py="xs"
                 className={editingId !== cat.id && deleteId !== cat.id ? 'inventory-row' : undefined}
-                style={{
-                  backgroundColor: idx % 2 === 0
-                    ? 'rgba(255,255,255,0.03)'
-                    : 'transparent',
-                  borderRadius: 4,
-                }}
+                style={displayRows.row(idx)}
               >
                 {editingId === cat.id ? (
                   // ── Inline edit row ─────────────────────────────────────────
@@ -202,8 +195,8 @@ const InventoryCategoryManagement = ({ opened, onClose, onCategoryChange }: Prop
                         They will become uncategorized.
                       </Text>
                     ) : (
-                      <Text size="md" c="var(--naja-text)">
-                        Remove <Text span fw={500} c="var(--naja-gold)">{cat.name}</Text>? This cannot be undone.
+                      <Text size="md">
+                        Remove <Text span fw={500} c="najaGold">{cat.name}</Text>? This cannot be undone.
                       </Text>
                     )}
                     {deleteError && <Text size="md" c="red">{deleteError}</Text>}
@@ -226,7 +219,7 @@ const InventoryCategoryManagement = ({ opened, onClose, onCategoryChange }: Prop
                     style={{ cursor: 'pointer' }}
                   >
                     <Group gap="md">
-                      <Text size="lg" c="var(--naja-text)">{cat.name}</Text>
+                      <Text size="lg">{cat.name}</Text>
                       {cat.item_count > 0 && (
                         <Badge variant="outline" color="najaGold" size="md">{cat.item_count}</Badge>
                       )}

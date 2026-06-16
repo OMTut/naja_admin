@@ -22,12 +22,12 @@ const InventorySummaryCard = ({ title, value, icon: Icon, onClick }: InventorySu
     onMouseLeave={e => (e.currentTarget.style.borderColor = 'rgba(204, 172, 49, 0.2)')}
   >
     <Group justify="space-between" align="flex-start">
-      <Text size="xs" c="var(--naja-text)" tt="uppercase" fw={700}>
+      <Text size="xs" tt="uppercase" fw={700}>
         {title}
       </Text>
       <Icon size={22} color="var(--naja-gold-alt)" stroke={1.5} />
     </Group>
-    <Text size="42px" fw={700} c="var(--naja-gold-alt)" mt="sm">
+    <Text size="42px" fw={700} c="najaGoldAlt" mt="sm">
       {value}
     </Text>
   </Paper>

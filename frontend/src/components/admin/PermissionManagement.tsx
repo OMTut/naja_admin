@@ -5,7 +5,7 @@ import {
 } from '@mantine/core';
 import { useDisclosure } from '@mantine/hooks';
 import { IconPlus, IconTrash } from '@tabler/icons-react';
-import { drawerStyles, inputStyles } from '../../styles/mantine';
+import { drawerClassNames, inputStyles, displayRows } from '../../styles/mantine';
 import type { Permission, PermissionCreate, PermissionUpdate } from '../../types/permission';
 import { permissionService } from '../../services/admin/permissionService';
 
@@ -125,15 +125,12 @@ const PermissionManagement = () => {
       px="sm"
       py="xs"
       className={deleteId !== perm.id ? 'inventory-row' : undefined}
-      style={{
-        backgroundColor: idx % 2 === 0 ? 'rgba(255,255,255,0.03)' : 'transparent',
-        borderRadius: 4,
-      }}
+      style={displayRows.row(idx)}
     >
       {deleteId === perm.id ? (
         <Stack gap={6} onBlur={e => { if (!e.currentTarget.contains(e.relatedTarget)) cancelDelete(); }}>
-          <Text size="sm" c="var(--naja-text)">
-            Remove <Text span fw={500} c="var(--naja-gold)">{perm.name}</Text>? This will remove it from all roles.
+          <Text size="sm">
+            Remove <Text span fw={500} c="najaGold">{perm.name}</Text>? This will remove it from all roles.
           </Text>
           {deleteError && <Text size="xs" c="red">{deleteError}</Text>}
           <Group gap="xs">
@@ -148,7 +145,7 @@ const PermissionManagement = () => {
       ) : (
         <Group gap="md" align="center" wrap="nowrap" onClick={() => startEdit(perm)} style={{ cursor: 'pointer' }}>
           <Box style={{ flex: 2, minWidth: 0 }}>
-            <Text size="md" c="var(--naja-text)" truncate>{perm.name}</Text>
+            <Text size="md" truncate>{perm.name}</Text>
           </Box>
           <Box style={{ flex: 4, minWidth: 0 }}>
             <Text size="sm" c="dimmed" truncate>{perm.description || '—'}</Text>
@@ -174,7 +171,7 @@ const PermissionManagement = () => {
     <Stack gap="lg">
       <Group justify="space-between" align="center">
         <h1 style={{ margin: 0 }}>Permission Management</h1>
-        <Button variant="outline" color="najaGold" leftSection={<IconPlus size={16} />} onClick={openAdd}>
+        <Button leftSection={<IconPlus size={16} />} onClick={openAdd}>
           Create Permission
         </Button>
       </Group>
@@ -182,15 +179,15 @@ const PermissionManagement = () => {
       {error && <Text c="red">{error}</Text>}
 
       {permissions.length === 0 ? (
-        <Text c="var(--naja-teal)">No permissions found. Create one to get started.</Text>
+        <Text c="najaTeal">No permissions found. Create one to get started.</Text>
       ) : (
         <Stack gap={0}>
-          <Group gap="md" px="sm" pb="xs" style={{ borderBottom: '1px solid rgba(204,172,49,0.3)' }}>
+          <Group gap="md" px="sm" pb="xs" style={displayRows.header}>
             <Box style={{ flex: 2 }}>
-              <Text size="xs" fw={700} tt="uppercase" c="var(--naja-gold)" style={{ letterSpacing: '0.05em' }}>Name</Text>
+              <span className="naja-col-label">Name</span>
             </Box>
             <Box style={{ flex: 4 }}>
-              <Text size="xs" fw={700} tt="uppercase" c="var(--naja-gold)" style={{ letterSpacing: '0.05em' }}>Description</Text>
+              <span className="naja-col-label">Description</span>
             </Box>
             <Box style={{ width: 40 }} />
           </Group>
@@ -204,10 +201,10 @@ const PermissionManagement = () => {
       <Drawer
         opened={addOpen}
         onClose={closeAdd}
-        title={<Text fw={700} c="var(--naja-gold)" tt="uppercase" size="md" style={{ letterSpacing: '0.05em' }}>Create Permission</Text>}
+        title={<Text fw={700} c="najaGold" tt="uppercase" size="md">Create Permission</Text>}
         position="right"
         size="lg"
-        styles={drawerStyles}
+        classNames={drawerClassNames}
       >
         <form onSubmit={handleAdd}>
           <Stack gap="sm" pt="xs">
@@ -229,7 +226,7 @@ const PermissionManagement = () => {
             {addError && <Text size="sm" c="red">{addError}</Text>}
             <Group justify="flex-end" mt="xs">
               <Button variant="subtle" color="gray" onClick={closeAdd} disabled={addSubmitting}>Cancel</Button>
-              <Button type="submit" variant="outline" color="najaGold" loading={addSubmitting}>Create</Button>
+              <Button type="submit" loading={addSubmitting}>Create</Button>
             </Group>
           </Stack>
         </form>
@@ -240,13 +237,13 @@ const PermissionManagement = () => {
         opened={editOpen}
         onClose={closeEdit}
         title={
-          <Text fw={700} c="var(--naja-gold)" tt="uppercase" size="md" style={{ letterSpacing: '0.05em' }}>
+          <Text fw={700} c="najaGold" tt="uppercase" size="md">
             {editingPerm?.name || 'Edit Permission'}
           </Text>
         }
         position="right"
         size="lg"
-        styles={drawerStyles}
+        classNames={drawerClassNames}
       >
         <form onSubmit={handleEdit}>
           <Stack gap="sm" pt="xs">
@@ -270,7 +267,7 @@ const PermissionManagement = () => {
                 Delete
               </Button>
               <Button variant="subtle" color="gray" onClick={closeEdit} disabled={editSubmit}>Cancel</Button>
-              <Button type="submit" variant="outline" color="najaGold" loading={editSubmit}>Save</Button>
+              <Button type="submit" loading={editSubmit}>Save</Button>
             </Group>
           </Stack>
         </form>

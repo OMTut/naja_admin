@@ -14,11 +14,11 @@
   --naja-sidebar:   #0A1B1F;
   --naja-gold:      #CCAC31;
   --naja-teal:      #265D73;
-  --naja-teal-dark: #204F59;
+  --naja-teal-dark: #1D4248;
   --naja-gold-alt:  #8C7326;
   --naja-text:      #DDD3BA;
 
-  font-family: 'Vollkorn', serif;
+  font-family: Verdana, Geneva, Tahoma, sans-serif;
   color-scheme: dark;
 }
 
@@ -38,13 +38,13 @@ h1 {
 }
 
 h2, h3 {
-  font-family: 'Vollkorn', Georgia, serif;
+  font-family: Verdana, Geneva, Tahoma, sans-serif;
   font-weight: 700;
-  color: var(--naja-gold);
+  color: var(--naja-gold-alt);
 }
 
 p {
-  font-family: 'Vollkorn', Georgia, serif;
+  font-family: Verdana, Geneva, Tahoma, sans-serif;
   color: var(--naja-text);
   font-size: 18px;
 }

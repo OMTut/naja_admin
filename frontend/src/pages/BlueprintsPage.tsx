@@ -50,20 +50,18 @@ const BlueprintsPage = () => {
     <Stack gap="lg">
       <Group justify="space-between" align="center">
         <h1 style={{ margin: 0 }}>Blueprints</h1>
-        <Button color="najaGold" onClick={openAdd}>+ Add Blueprint</Button>
+        <Button variant="filled" onClick={openAdd}>+ Add Blueprint</Button>
       </Group>
 
       <Group gap="xs">
         <Button
           variant={view === 'personal' ? 'filled' : 'outline'}
-          color="najaGold"
           onClick={() => setView('personal')}
         >
           Personal
         </Button>
         <Button
           variant={view === 'org' ? 'filled' : 'outline'}
-          color="najaGold"
           onClick={() => setView('org')}
         >
           Org
@@ -96,7 +94,6 @@ const BlueprintsPage = () => {
             <Button
               size="xs"
               variant={sizeFilter === null ? 'filled' : 'outline'}
-              color="najaGold"
               onClick={() => setSizeFilter(null)}
             >
               All Sizes
@@ -106,7 +103,6 @@ const BlueprintsPage = () => {
                 key={size}
                 size="xs"
                 variant={sizeFilter === size ? 'filled' : 'outline'}
-                color="najaGold"
                 onClick={() => setSizeFilter(size)}
               >
                 Size {size}
