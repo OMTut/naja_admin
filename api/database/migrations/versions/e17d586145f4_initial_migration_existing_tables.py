@@ -24,7 +24,6 @@ def upgrade() -> None:
     sa.Column('id', sa.Integer(), autoincrement=True, nullable=False),
     sa.Column('discord_id', sa.String(length=20), nullable=False),
     sa.Column('discord_username', sa.String(length=32), nullable=False),
-    sa.Column('global_name', sa.String(length=32), nullable=True),
     sa.Column('server_nickname', sa.String(length=64), nullable=True),
     sa.Column('email', sa.String(length=255), nullable=True),
     sa.Column('status', sa.Enum('pending', 'approved', 'rejected', 'banned', name='userstatus'), nullable=False, server_default='pending'),
