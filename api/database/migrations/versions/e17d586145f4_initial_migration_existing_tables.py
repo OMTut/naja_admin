@@ -26,7 +26,7 @@ def upgrade() -> None:
     sa.Column('discord_username', sa.String(length=32), nullable=False),
     sa.Column('server_nickname', sa.String(length=64), nullable=True),
     sa.Column('email', sa.String(length=255), nullable=True),
-    sa.Column('status', sa.Enum('pending', 'approved', 'rejected', 'banned', name='userstatus'), nullable=False, server_default='pending'),
+    sa.Column('status', sa.Enum('PENDING', 'APPROVED', 'REJECTED', 'BANNED', name='userstatus'), nullable=False, server_default='PENDING'),
     sa.Column('created_at', sa.DateTime(timezone=True), server_default=sa.text('CURRENT_TIMESTAMP'), nullable=True),
     sa.Column('updated_at', sa.DateTime(timezone=True), server_default=sa.text('CURRENT_TIMESTAMP'), nullable=True),
     sa.Column('last_login_at', sa.DateTime(timezone=True), server_default=sa.text('CURRENT_TIMESTAMP'), nullable=True),
