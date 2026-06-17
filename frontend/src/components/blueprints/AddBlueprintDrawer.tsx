@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Stack, Group, Text, Button, Box, Select, TextInput, Drawer, Loader } from '@mantine/core';
+import { Stack, Group, Button, Box, Select, TextInput, Drawer, Loader } from '@mantine/core';
 import { IconSearch } from '@tabler/icons-react';
 import { inputStyles, drawerClassNames, displayRows, blueprintCols } from '../../styles/mantine';
 import { blueprintService } from '../../services/admin/blueprintService';

@@ -1,4 +1,4 @@
-import { Drawer, Stack, Group, Text, Loader, List, Button } from '@mantine/core';
+import { Drawer, Stack, Group, Loader, List, Button } from '@mantine/core';
 import { drawerClassNames } from '../../styles/mantine';
 import type { BlueprintDetail } from '../../types/blueprint';
 

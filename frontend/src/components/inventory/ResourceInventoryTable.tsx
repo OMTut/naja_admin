@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import {
   Stack, Group, Text, Table, Button, Modal,
-  TextInput, NumberInput, Autocomplete, Loader,
+  TextInput, NumberInput, Autocomplete,
 } from '@mantine/core';
 import { useDisclosure } from '@mantine/hooks';
 import { IconPlus } from '@tabler/icons-react';

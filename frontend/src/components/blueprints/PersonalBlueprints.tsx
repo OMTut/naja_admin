@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Stack, Group, Text, Button, Box } from '@mantine/core';
+import { Stack, Group, Text, Box } from '@mantine/core';
 import { useDisclosure } from '@mantine/hooks';
 import { displayRows, blueprintCols } from '../../styles/mantine';
 import { blueprintService } from '../../services/admin/blueprintService';

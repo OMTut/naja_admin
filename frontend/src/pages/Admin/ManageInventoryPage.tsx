@@ -1,11 +1,6 @@
 import { Stack, Text } from '@mantine/core';
 import MiscInventoryManagement from '../../components/admin/MiscInventoryManagement';
 
-const sectionLabel = {
-  textTransform: 'uppercase' as const,
-  letterSpacing: '0.05em',
-  fontSize: '13px',
-};
 
 const ManageInventoryPage = () => (
   <Stack gap="lg">

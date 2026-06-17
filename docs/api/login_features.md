@@ -16,3 +16,8 @@ Access checks happen in the db
 - Is the user in the guild? - Discord API
 - Is the user approved? - Naja db
 - Do their discord roles grant access?
+
+### Server-Side Revocation
+on every /me check, the app calls Discord's live API to verify the user still has their roles. If they've been kicked from the server or
+have had their role removed, the sessions are deleted and access is
+cut off.

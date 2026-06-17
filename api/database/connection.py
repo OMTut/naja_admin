@@ -1,4 +1,5 @@
 from sqlalchemy import create_engine, text
+from sqlalchemy.engine import URL
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.ext.declarative import declarative_base
 import os
@@ -9,11 +10,19 @@ import pathlib
 env_path = pathlib.Path(__file__).parent.parent / ".env"
 load_dotenv(dotenv_path=env_path)
 
-# Database URL from environment variable
-DATABASE_URL = os.getenv("DATABASE_URL")
+# Build engine URL from individual components to avoid percent-encoding issues
+# with special characters (e.g. @) in passwords
+db_url = URL.create(
+    drivername="postgresql+psycopg2",
+    username=os.getenv("DATABASE_USER"),
+    password=os.getenv("DATABASE_PASSWORD"),
+    host=os.getenv("DATABASE_HOST"),
+    port=int(os.getenv("DATABASE_PORT", 5432)),
+    database=os.getenv("DATABASE_NAME"),
+)
 
 # Create SQLAlchemy engine
-engine = create_engine(DATABASE_URL)
+engine = create_engine(db_url)
 
 # Session factory
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
