@@ -3,6 +3,7 @@ Blueprint catalog routes (admin)
 """
 from typing import Optional, List
 
+import httpx
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
 from sqlalchemy import func, distinct
