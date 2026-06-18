@@ -35,7 +35,7 @@ class UserBlueprintResponse(BaseModel):
 
 # ── Routes ────────────────────────────────────────────────────────────────────
 
-@router.get("/", response_model=List[UserBlueprintResponse])
+@router.get("", response_model=List[UserBlueprintResponse])
 async def get_my_blueprints(
     db: Session = Depends(get_db),
     current_user: User = Depends(require_session),
