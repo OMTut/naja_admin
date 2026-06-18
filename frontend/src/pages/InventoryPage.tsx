@@ -1,26 +1,10 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Stack, Text, SimpleGrid } from '@mantine/core';
-import { IconId } from '@tabler/icons-react';
+import { Stack, Text, SimpleGrid, Divider, Group } from '@mantine/core';
+import { IconBox } from '@tabler/icons-react';
 import { miscInventoryService } from '../services/inventory/miscInventoryService';
 import type { InventoryCatalogItem } from '../types/inventory';
 import InventorySummaryCard from '../components/inventory/InventorySummaryCard';
-
-interface CardConfig {
-  title:      string;
-  itemName:   string;
-  icon:       React.FC<{ size?: number; stroke?: number; color?: string }>;
-  navigateTo: string;
-}
-
-const cards: CardConfig[] = [
-  {
-    title:      'Red Keycards',
-    itemName:   'PYAM Supervisor Keycard (Level 2)',
-    icon:       IconId,
-    navigateTo: '/inventory/misc',
-  },
-];
 
 const InventoryPage = () => {
   const navigate = useNavigate();
@@ -30,31 +14,51 @@ const InventoryPage = () => {
     miscInventoryService.getCatalog().then(setCatalog).catch(() => {});
   }, []);
 
-  const getQty = (itemName: string) => {
-    const match = catalog.find(
-      c => c.display_name.toLowerCase() === itemName.toLowerCase()
+  // Group items by category
+  const grouped = catalog.reduce<Record<string, InventoryCatalogItem[]>>((acc, item) => {
+    const key = item.category?.name ?? 'Uncategorized';
+    if (!acc[key]) acc[key] = [];
+    acc[key].push(item);
+    return acc;
+  }, {});
+
+  const categories = Object.keys(grouped).sort((a, b) => {
+    if (a === 'Uncategorized') return 1;
+    if (b === 'Uncategorized') return -1;
+    return a.localeCompare(b);
+  });
+
+  if (catalog.length === 0) {
+    return (
+      <Stack gap="lg">
+        <Text c="najaTeal">No inventory items tracked yet.</Text>
+      </Stack>
     );
-    return match ? match.total_quantity : '—';
-  };
+  }
 
   return (
-    <Stack gap="lg">
-      <Stack gap="xs">
-        <Text size="s" tt="uppercase" fw={700} style={{ letterSpacing: '0.05em' }}>
-          Miscellaneous Items
-        </Text>
-        <SimpleGrid cols={{ base: 2, sm: 4, lg: 4 }}>
-          {cards.map(card => (
-            <InventorySummaryCard
-              key={card.title}
-              title={card.title}
-              value={getQty(card.itemName)}
-              icon={card.icon}
-              onClick={() => navigate(card.navigateTo)}
-            />
-          ))}
-        </SimpleGrid>
-      </Stack>
+    <Stack gap="xl">
+      {categories.map(category => (
+        <Stack key={category} gap="xs">
+          <Group gap="xs" align="center">
+            <Text size="sm" tt="uppercase" fw={700} c="najaGold" style={{ letterSpacing: '0.05em' }}>
+              {category}
+            </Text>
+            <Divider flex={1} color="rgba(204,172,49,0.15)" />
+          </Group>
+          <SimpleGrid cols={{ base: 2, sm: 3, lg: 4 }}>
+            {grouped[category].map(item => (
+              <InventorySummaryCard
+                key={item.id}
+                title={item.display_name}
+                value={item.total_quantity}
+                icon={IconBox}
+                onClick={() => navigate(`/inventory/misc/${item.id}`)}
+              />
+            ))}
+          </SimpleGrid>
+        </Stack>
+      ))}
     </Stack>
   );
 };

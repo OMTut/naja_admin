@@ -108,12 +108,12 @@ class MiscInventoryService {
   // ── Holdings ───────────────────────────────────────────────────────────────
 
   async getHoldings(): Promise<MiscInventoryEntry[]> {
-    const res = await fetch(`${BASE}/`, { credentials: 'include' });
+    const res = await fetch(BASE, { credentials: 'include' });
     return _json(res);
   }
 
   async addHolding(data: HoldingCreate): Promise<MiscInventoryEntry> {
-    const res = await fetch(`${BASE}/`, {
+    const res = await fetch(BASE, {
       method: 'POST',
       credentials: 'include',
       headers: { 'Content-Type': 'application/json' },

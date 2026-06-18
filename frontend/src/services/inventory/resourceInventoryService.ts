@@ -8,13 +8,13 @@ class ResourceInventoryService {
   private baseUrl = `${import.meta.env.VITE_API_BASE_URL}/api/inventory/resources`;
 
   async getAll(): Promise<ResourceInventoryEntry[]> {
-    const res = await fetch(`${this.baseUrl}/`, { credentials: 'include' });
+    const res = await fetch(this.baseUrl, { credentials: 'include' });
     if (!res.ok) throw new Error('Failed to load inventory');
     return res.json();
   }
 
   async add(data: ResourceInventoryCreate): Promise<ResourceInventoryEntry> {
-    const res = await fetch(`${this.baseUrl}/`, {
+    const res = await fetch(this.baseUrl, {
       method: 'POST',
       credentials: 'include',
       headers: { 'Content-Type': 'application/json' },

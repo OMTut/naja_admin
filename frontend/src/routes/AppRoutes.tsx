@@ -10,6 +10,7 @@ import InventoryPage from "../pages/InventoryPage";
 import ManageInventoryPage from "../pages/Admin/ManageInventoryPage";
 import ResourceInventoryPage from "../pages/ResourceInventoryPage";
 import MiscInventoryPage from "../pages/MiscInventoryPage";
+import MiscInventoryItemPage from "../pages/MiscInventoryItemPage";
 import LoginPage from "../pages/LoginPage";
 import ProfilePage from "../pages/ProfilePage";
 import ProtectedRoute from "../components/auth/ProtectedRoute";
@@ -135,6 +136,16 @@ const AppRoutes = () => (
                     <ProtectedRoute>
                         <Layout>
                             <MiscInventoryPage />
+                        </Layout>
+                    </ProtectedRoute>
+                }
+            />
+            <Route
+                path="/inventory/misc/:itemId"
+                element={
+                    <ProtectedRoute>
+                        <Layout>
+                            <MiscInventoryItemPage />
                         </Layout>
                     </ProtectedRoute>
                 }

@@ -32,7 +32,11 @@ const eventLabel = (e: MiscInventoryEvent) => {
   }
 };
 
-const MiscInventoryTable = () => {
+interface MiscInventoryTableProps {
+  catalogItemId?: number;
+}
+
+const MiscInventoryTable = ({ catalogItemId }: MiscInventoryTableProps) => {
   const { user } = useAuth();
   const canManageInventory = user?.permissions?.includes('inventory') ?? false;
 
@@ -44,7 +48,9 @@ const MiscInventoryTable = () => {
 
   // Add modal
   const [addOpen, { open: openAdd, close: closeAdd }] = useDisclosure(false);
-  const [addCatalogId, setAddCatalogId] = useState<string | null>(null);
+  const [addCatalogId, setAddCatalogId] = useState<string | null>(
+    catalogItemId ? String(catalogItemId) : null
+  );
   const [addLocation,  setAddLocation]  = useState('');
   const [addQty,       setAddQty]       = useState<number | string>(1);
   const [addHeldBy,    setAddHeldBy]    = useState<string | null>(null);
@@ -108,7 +114,7 @@ const MiscInventoryTable = () => {
       });
       setHoldings(prev => [entry, ...prev]);
       closeAdd();
-      setAddCatalogId(null); setAddLocation(''); setAddQty(1);
+      setAddCatalogId(catalogItemId ? String(catalogItemId) : null); setAddLocation(''); setAddQty(1);
       setAddHeldBy(null); setAddAddedBy(null);
     } catch (err) {
       setAddError(err instanceof Error ? err.message : 'Failed to add holding.');
@@ -189,6 +195,10 @@ const MiscInventoryTable = () => {
     }
   };
 
+  const displayedHoldings = catalogItemId
+    ? holdings.filter(h => h.catalog_item_id === catalogItemId)
+    : holdings;
+
   if (loading) return <Text c="najaGold">Loading misc inventory...</Text>;
 
   return (
@@ -209,11 +219,11 @@ const MiscInventoryTable = () => {
         <Text c="najaTeal">No tracked items defined yet. An admin must add items before holdings can be reported.</Text>
       )}
 
-      {catalog.length > 0 && holdings.length === 0 && (
+      {catalog.length > 0 && displayedHoldings.length === 0 && (
         <Text c="najaTeal">No holdings reported yet.</Text>
       )}
 
-      {holdings.length > 0 && (
+      {displayedHoldings.length > 0 && (
         <Table striped highlightOnHover styles={tableStyles}>
           <Table.Thead>
             <Table.Tr>
@@ -227,7 +237,7 @@ const MiscInventoryTable = () => {
             </Table.Tr>
           </Table.Thead>
           <Table.Tbody>
-            {holdings.map(h => {
+            {displayedHoldings.map(h => {
               const depleted = h.status === 'depleted';
               return (
                 <Table.Tr
@@ -279,16 +289,18 @@ const MiscInventoryTable = () => {
       {/* ── Add Modal ──────────────────────────────────────────────────────────── */}
       <Modal opened={addOpen} onClose={closeAdd} title="Report Holding" size="md" styles={modalStyles}>
         <Stack gap="sm">
-          <Select
-            label="Item"
-            placeholder="Select an item..."
-            data={catalogOptions}
-            value={addCatalogId}
-            onChange={setAddCatalogId}
-            searchable
-            styles={inputStyles}
-            required
-          />
+          {!catalogItemId && (
+            <Select
+              label="Item"
+              placeholder="Select an item..."
+              data={catalogOptions}
+              value={addCatalogId}
+              onChange={setAddCatalogId}
+              searchable
+              styles={inputStyles}
+              required
+            />
+          )}
           <NumberInput
             label="Quantity"
             min={1}

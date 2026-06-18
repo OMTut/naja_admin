@@ -4,7 +4,7 @@ class OreService {
   private baseUrl = `${import.meta.env.VITE_API_BASE_URL}/api/admin/ores`;
 
   async getOres(): Promise<Ore[]> {
-    const res = await fetch(`${this.baseUrl}/`, { credentials: 'include' });
+    const res = await fetch(this.baseUrl, { credentials: 'include' });
     if (!res.ok) throw new Error('Failed to load ores');
     return res.json();
   }
