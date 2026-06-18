@@ -44,7 +44,8 @@ async def lifespan(app: FastAPI):
 app = FastAPI(
     title=os.getenv("APP_NAME", "Auth API"),
     version=os.getenv("APP_VERSION", "1.0.0"),
-    lifespan=lifespan
+    lifespan=lifespan,
+    redirect_slashes=False,
 )
 
 # Add CORS middleware for your frontend
