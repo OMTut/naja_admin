@@ -73,7 +73,7 @@ class ResourceInventoryResponse(BaseModel):
 
 # ── Routes ────────────────────────────────────────────────────────────────────
 
-@router.get("/", response_model=List[ResourceInventoryResponse])
+@router.get("", response_model=List[ResourceInventoryResponse])
 async def list_resources(
     db: Session = Depends(get_db),
     current_user: User = Depends(require_session),
@@ -100,7 +100,7 @@ async def list_resources(
     ]
 
 
-@router.post("/", response_model=ResourceInventoryResponse, status_code=201)
+@router.post("", response_model=ResourceInventoryResponse, status_code=201)
 async def add_resource(
     body: ResourceInventoryCreate,
     db: Session = Depends(get_db),

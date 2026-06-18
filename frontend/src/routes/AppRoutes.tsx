@@ -20,7 +20,7 @@ const AppRoutes = () => (
     <Router>
         <Routes>
             <Route
-                path="/"
+                path=""
                 element={
                     <ProtectedRoute>
                         <Layout>

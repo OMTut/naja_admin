@@ -9,7 +9,7 @@ from main import app
 async def test_root_endpoint():
     """Test the root endpoint returns correct message."""
     async with AsyncClient(app=app, base_url="http://test") as client:
-        response = await client.get("/")
+        response = await client.get("")
         
         assert response.status_code == 200
         data = response.json()
