@@ -77,15 +77,14 @@ def _get_inventory_manager_ids(db: Session) -> set[int]:
     return {row[0] for row in rows}
 
 
-def _catalog_response(cat: InventoryCatalog, manager_ids: set[int]) -> dict:
+def _catalog_response(cat: InventoryCatalog) -> dict:
     active = [h for h in cat.holdings if h.status != "depleted"]
-    managed = [h for h in active if h.held_by in manager_ids]
     return {
         "id":             cat.id,
         "display_name":   cat.display_name,
         "category":       _category_display(cat.category_obj),
-        "total_quantity": sum(h.quantity for h in managed),
-        "holder_count":   len({h.held_by for h in managed if h.held_by}),
+        "total_quantity": sum(h.quantity for h in active),
+        "holder_count":   len({h.held_by for h in active if h.held_by}),
         "created_at":     cat.created_at,
     }
 
@@ -239,8 +238,7 @@ async def list_catalog(
     _: User = Depends(require_session),
 ):
     items = db.query(InventoryCatalog).order_by(InventoryCatalog.display_name).all()
-    manager_ids = _get_inventory_manager_ids(db)
-    return [_catalog_response(c, manager_ids) for c in items]
+    return [_catalog_response(c) for c in items]
 
 
 @router.post("/catalog", status_code=201)
@@ -262,7 +260,7 @@ async def create_catalog_item(
     db.add(item)
     db.commit()
     db.refresh(item)
-    return _catalog_response(item, _get_inventory_manager_ids(db))
+    return _catalog_response(item)
 
 
 @router.patch("/catalog/{catalog_id}")
@@ -281,7 +279,7 @@ async def update_catalog_item(
     if body.category_id  is not None: item.category_id  = body.category_id
     db.commit()
     db.refresh(item)
-    return _catalog_response(item, _get_inventory_manager_ids(db))
+    return _catalog_response(item)
 
 
 @router.delete("/catalog/{catalog_id}", status_code=204)
