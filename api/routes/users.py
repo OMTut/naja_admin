@@ -49,7 +49,7 @@ class UserResponse(BaseModel):
 
 
 # User administration endpoints
-@router.get("/", response_model=List[UserResponse])
+@router.get("", response_model=List[UserResponse])
 async def get_all_users(db: Session = Depends(get_db), _=Depends(require_session)):
     """Get all users"""
     users = db.query(User).all()
