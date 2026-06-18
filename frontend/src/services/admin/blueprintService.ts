@@ -18,8 +18,8 @@ class BlueprintService {
 
   async getBlueprints(categoryUuid?: string): Promise<BlueprintSummary[]> {
     const url = categoryUuid
-      ? `${this.baseUrl}/?category=${categoryUuid}`
-      : `${this.baseUrl}/`;
+      ? `${this.baseUrl}?category=${categoryUuid}`
+      : this.baseUrl;
     const res = await fetch(url, { credentials: 'include' });
     if (!res.ok) throw new Error('Failed to load blueprints');
     return res.json();
