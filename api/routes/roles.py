@@ -51,7 +51,7 @@ def _role_dict(role: Role) -> dict:
     }
 
 
-@router.get("/", response_model=List[RoleResponse])
+@router.get("", response_model=List[RoleResponse])
 async def get_all_roles(db: Session = Depends(get_db), _=Depends(require_session)):
     roles = db.query(Role).all()
     return [_role_dict(r) for r in roles]
@@ -65,7 +65,7 @@ async def get_role(role_id: int, db: Session = Depends(get_db), _=Depends(requir
     return _role_dict(role)
 
 
-@router.post("/", response_model=RoleResponse, status_code=201)
+@router.post("", response_model=RoleResponse, status_code=201)
 async def create_role(role_data: RoleCreate, db: Session = Depends(get_db), _=Depends(require_session)):
     existing = db.query(Role).filter(
         (Role.role_discord_id == role_data.role_discord_id) |
