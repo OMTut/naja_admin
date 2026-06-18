@@ -317,7 +317,7 @@ async def list_members(
 
 # ── Holding routes ────────────────────────────────────────────────────────────
 
-@router.get("/")
+@router.get("")
 async def list_holdings(
     db: Session = Depends(get_db),
     _: User = Depends(require_session),
@@ -330,7 +330,7 @@ async def list_holdings(
     return [_holding_response(h) for h in holdings]
 
 
-@router.post("/", status_code=201)
+@router.post("", status_code=201)
 async def add_holding(
     body: HoldingCreate,
     db: Session = Depends(get_db),
