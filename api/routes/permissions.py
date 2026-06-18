@@ -30,12 +30,12 @@ class PermissionResponse(BaseModel):
     description: Optional[str]
 
 
-@router.get("/", response_model=List[PermissionResponse])
+@router.get("", response_model=List[PermissionResponse])
 async def get_permissions(_=Depends(require_session)):
     return get_all_permissions()
 
 
-@router.post("/", response_model=PermissionResponse, status_code=201)
+@router.post("", response_model=PermissionResponse, status_code=201)
 async def create_perm(data: PermissionCreate, _=Depends(require_session)):
     result = create_permission(data.name.strip(), data.description)
     if result is None:

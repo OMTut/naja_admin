@@ -8,7 +8,7 @@ This document covers the two types of roles in Naja Admin, how they are created 
 
 ### Discord Roles
 
-Discord roles are created in The Junto Discord server and registered in Naja Admin by entering their Discord Role ID. The `role_discord_id` field must match the actual ID of the role in the guild.
+Discord roles are manually created in the app and in the Discord server. They are registered in Naja Admin by entering their Discord Role ID. The `role_discord_id` field must match the actual ID of the role in the guild.
 
 **Characteristics:**
 - Tied to a real Discord role by `role_discord_id`
