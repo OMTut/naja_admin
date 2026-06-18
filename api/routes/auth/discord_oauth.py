@@ -42,6 +42,7 @@ async def exchange_code_for_token(code: str) -> Dict[str, Any]:
         response = await client.post(token_url, data=data, headers=headers)
         
         if response.status_code != 200:
+            print(f"Discord token exchange failed: {response.status_code} - {response.text}")
             raise HTTPException(status_code=400, detail="Failed to exchange code for token")
         
         return response.json()
@@ -244,12 +245,14 @@ async def discord_callback(code: str = None, error: str = None):
             redirect_response = RedirectResponse(
                 url=f"{frontend_url}/?auth=success&message=Login successful"
             )
+            cookie_domain = os.getenv("COOKIE_DOMAIN")
             redirect_response.set_cookie(
                 key="session_id",
                 value=session_id,
                 httponly=True,
                 secure=os.getenv("ENVIRONMENT") == "production",
                 samesite="lax",
+                domain=cookie_domain,
                 max_age=86400 * 7  # 7 days
             )
             return redirect_response
@@ -302,6 +305,7 @@ async def discord_callback(code: str = None, error: str = None):
             url=f"{frontend_url}/?error=discord_auth_failed&message={e.detail}"
         )
     except Exception as e:
+        print(f"Unexpected error in discord_callback: {type(e).__name__}: {e}")
         return RedirectResponse(
             url=f"{frontend_url}/?error=discord_auth_failed&message=An unexpected error occurred"
         )
