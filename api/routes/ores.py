@@ -30,7 +30,7 @@ class OreResponse(BaseModel):
 
 # ── Routes ────────────────────────────────────────────────────────────────────
 
-@router.get("/", response_model=List[OreResponse])
+@router.get("", response_model=List[OreResponse])
 async def get_ores(db: Session = Depends(get_db), _=Depends(require_session)):
     return db.query(Ore).order_by(Ore.display_name).all()
 

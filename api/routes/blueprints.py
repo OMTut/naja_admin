@@ -163,7 +163,7 @@ async def trigger_sync(db: Session = Depends(get_db), _=Depends(require_session)
         raise HTTPException(status_code=500, detail=f"Sync failed: {e}")
 
 
-@router.get("/", response_model=List[BlueprintSummaryResponse])
+@router.get("", response_model=List[BlueprintSummaryResponse])
 async def get_blueprints(
     category: Optional[str] = None,
     db: Session = Depends(get_db),
