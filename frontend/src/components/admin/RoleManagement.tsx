@@ -8,6 +8,7 @@ import { IconPlus, IconTrash } from '@tabler/icons-react';
 import { drawerClassNames, inputStyles, displayRows } from '../../styles/mantine';
 import type { Role, RoleCreate, RoleUpdate } from '../../types/role';
 import { roleService } from '../../services/admin/roleService';
+import { permissionService } from '../../services/admin/permissionService';
 
 const RoleManagement = () => {
   const [roles, setRoles] = useState<Role[]>([]);
@@ -35,12 +36,20 @@ const RoleManagement = () => {
   const [editSubmit, setEditSubmit] = useState(false);
   const [editError, setEditError] = useState('');
 
+  // Permissions list for MultiSelect
+  const [permissionOptions, setPermissionOptions] = useState<{ value: string; label: string }[]>([]);
+
   // Inline delete
   const [deleteId, setDeleteId] = useState<number | null>(null);
   const [deleteSubmit, setDeleteSubmit] = useState(false);
   const [deleteError, setDeleteError] = useState('');
 
-  useEffect(() => { loadRoles(); }, []);
+  useEffect(() => {
+    loadRoles();
+    permissionService.getAllPermissions()
+      .then(perms => setPermissionOptions(perms.map(p => ({ value: p.name, label: p.name }))))
+      .catch(() => {});
+  }, []);
 
   const loadRoles = async () => {
     try {
@@ -304,12 +313,7 @@ const RoleManagement = () => {
               label="Permissions"
               value={addData.permissions || []}
               onChange={val => setAddData({ ...addData, permissions: val })}
-              data={[
-                { value: 'site_access', label: 'Site Access' },
-                { value: 'admin', label: 'Admin' },
-                { value: 'inventory', label: 'Inventory' },
-                { value: 'blueprints', label: 'Blueprints' },
-              ]}
+              data={permissionOptions}
               styles={inputStyles}
             />
             {addError && <Text size="sm" c="red">{addError}</Text>}
@@ -362,12 +366,7 @@ const RoleManagement = () => {
               label="Permissions"
               value={editData.permissions || []}
               onChange={val => setEditData({ ...editData, permissions: val })}
-              data={[
-                { value: 'site_access', label: 'Site Access' },
-                { value: 'admin', label: 'Admin' },
-                { value: 'inventory', label: 'Inventory' },
-                { value: 'blueprints', label: 'Blueprints' },
-              ]}
+              data={permissionOptions}
               styles={inputStyles}
             />
             {editError && <Text size="sm" c="red">{editError}</Text>}
