@@ -141,7 +141,7 @@ const AppRoutes = () => (
                 }
             />
             <Route
-                path="/inventory/misc/:itemId"
+                path="/inventory/misc/:itemSlug"
                 element={
                     <ProtectedRoute>
                         <Layout>

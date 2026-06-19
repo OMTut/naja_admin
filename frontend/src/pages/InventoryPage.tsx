@@ -5,6 +5,7 @@ import { IconBox } from '@tabler/icons-react';
 import { miscInventoryService } from '../services/inventory/miscInventoryService';
 import type { InventoryCatalogItem } from '../types/inventory';
 import InventorySummaryCard from '../components/inventory/InventorySummaryCard';
+import { toSlug } from '../utils/slug';
 
 const InventoryPage = () => {
   const navigate = useNavigate();
@@ -53,7 +54,7 @@ const InventoryPage = () => {
                 title={item.display_name}
                 value={item.total_quantity}
                 icon={IconBox}
-                onClick={() => navigate(`/inventory/misc/${item.id}`)}
+                onClick={() => navigate(`/inventory/misc/${toSlug(item.display_name)}`)}
               />
             ))}
           </SimpleGrid>
