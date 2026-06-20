@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Stack, Text, SimpleGrid, Divider, Group } from '@mantine/core';
-import { IconBox } from '@tabler/icons-react';
 import { miscInventoryService } from '../services/inventory/miscInventoryService';
 import type { InventoryCatalogItem } from '../types/inventory';
 import InventorySummaryCard from '../components/inventory/InventorySummaryCard';
@@ -47,13 +46,12 @@ const InventoryPage = () => {
             </Text>
             <Divider flex={1} color="rgba(204,172,49,0.15)" />
           </Group>
-          <SimpleGrid cols={{ base: 2, sm: 3, lg: 4 }}>
+          <SimpleGrid cols={{ base: 2, sm: 4, lg: 4 }}>
             {grouped[category].map(item => (
               <InventorySummaryCard
                 key={item.id}
                 title={item.display_name}
                 value={item.total_quantity}
-                icon={IconBox}
                 onClick={() => navigate(`/inventory/misc/${toSlug(item.display_name)}`)}
               />
             ))}

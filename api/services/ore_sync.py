@@ -40,8 +40,15 @@ def sync_ores(db: Session) -> dict:
             ))
             ores_added += 1
 
+    # Remove ores no longer present in SC_Data
+    ores_removed = (
+        db.query(Ore)
+        .filter(~Ore.display_name.in_(seen))
+        .delete(synchronize_session=False)
+    )
+
     db.commit()
 
     return {
-        "ores": {"added": ores_added, "updated": ores_updated},
+        "ores": {"added": ores_added, "updated": ores_updated, "removed": ores_removed},
     }
